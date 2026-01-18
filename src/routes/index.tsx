@@ -135,14 +135,14 @@ function DashboardContent() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold">Dashboard</h1>
           <p className="text-muted-foreground">
             Overview of today's chores and balances
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           {canQuickAssign && (
             <Button variant="outline" onClick={() => setQuickAssignOpen(true)}>
               <Zap className="mr-2 h-4 w-4" />
@@ -371,11 +371,11 @@ function DashboardContent() {
               return (
                 <Card key={chore._id}>
                   <CardContent className="py-4">
-                    <div className="flex items-center gap-4">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 text-xl">
+                    <div className="flex flex-wrap items-center gap-3 sm:gap-4">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gray-100 text-xl">
                         {chore.template?.icon ?? '📋'}
                       </div>
-                      <div className="flex-1">
+                      <div className="flex-1 min-w-0">
                         <p className="font-medium">
                           {chore.template?.name ?? 'Unknown Chore'}
                         </p>

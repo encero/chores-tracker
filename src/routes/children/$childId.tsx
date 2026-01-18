@@ -163,13 +163,13 @@ function ChildDetailContent() {
 
       {/* Child Header */}
       <Card>
-        <CardContent className="flex items-center gap-6 py-6">
-          <div className="flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-blue-100 to-purple-100 text-5xl">
+        <CardContent className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 py-6">
+          <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-100 to-purple-100 text-5xl">
             {child.avatarEmoji}
           </div>
-          <div className="flex-1">
-            <h1 className="text-3xl font-bold">{child.name}</h1>
-            <div className="mt-1 flex items-center gap-4 text-sm text-muted-foreground">
+          <div className="flex-1 min-w-0">
+            <h1 className="text-2xl sm:text-3xl font-bold">{child.name}</h1>
+            <div className="mt-1 flex flex-wrap items-center gap-2 sm:gap-4 text-sm text-muted-foreground">
               <span>
                 Access code: <strong>{child.accessCode}</strong>
               </span>
@@ -178,16 +178,16 @@ function ChildDetailContent() {
                 Regenerate
               </Button>
             </div>
-            <p className="mt-1 text-sm text-muted-foreground">
+            <p className="mt-1 text-sm text-muted-foreground break-all">
               Kid URL: <code className="bg-muted px-1 rounded">/kid/{child.accessCode}</code>
             </p>
           </div>
-          <div className="text-right">
+          <div className="w-full sm:w-auto sm:text-right">
             <p className="text-sm text-muted-foreground">Balance</p>
-            <p className="text-4xl font-bold text-green-600">
+            <p className="text-3xl sm:text-4xl font-bold text-green-600">
               {formatCurrency(child.balance, currency)}
             </p>
-            <div className="mt-2 flex gap-2 justify-end">
+            <div className="mt-2 flex flex-wrap gap-2 sm:justify-end">
               <Button
                 variant="outline"
                 onClick={() => {

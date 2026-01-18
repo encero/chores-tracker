@@ -375,7 +375,7 @@ function ScheduleContent() {
               {scheduleType === 'custom' && (
                 <div className="space-y-2">
                   <Label>Days of Week</Label>
-                  <div className="flex gap-1">
+                  <div className="flex flex-wrap gap-1">
                     {DAYS_OF_WEEK.map((day) => (
                       <button
                         key={day.value}
@@ -465,12 +465,40 @@ function ScheduleContent() {
         <div className="space-y-3">
           {schedules.filter((schedule) => schedule.scheduleType !== 'once').map((schedule) => (
             <Card key={schedule._id} className={!schedule.isActive ? 'opacity-60' : ''}>
-              <CardContent className="flex items-center gap-4 py-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gray-100 text-2xl">
-                  {schedule.template?.icon ?? '📋'}
+              <CardContent className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 py-4">
+                <div className="flex items-center gap-3 sm:gap-4">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-gray-100 text-2xl">
+                    {schedule.template?.icon ?? '📋'}
+                  </div>
+                  <div className="flex-1 min-w-0 sm:hidden">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="font-semibold">
+                        {schedule.template?.name ?? 'Unknown Chore'}
+                      </p>
+                      {schedule.isOptional && (
+                        <Badge variant="secondary" className="bg-amber-100 text-amber-800">
+                          <Sparkles className="mr-1 h-3 w-3" />
+                          Optional
+                        </Badge>
+                      )}
+                      {schedule.isJoined && (
+                        <Badge variant="secondary">
+                          <Users className="mr-1 h-3 w-3" />
+                          Joined
+                        </Badge>
+                      )}
+                      {!schedule.isActive && (
+                        <Badge variant="outline">Paused</Badge>
+                      )}
+                    </div>
+                    <p className="font-semibold text-green-600">
+                      {formatCurrency(schedule.reward, currency)}
+                      {schedule.isJoined && <span className="text-xs text-muted-foreground ml-1">total</span>}
+                    </p>
+                  </div>
                 </div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
+                <div className="flex-1 min-w-0 hidden sm:block">
+                  <div className="flex flex-wrap items-center gap-2">
                     <p className="font-semibold">
                       {schedule.template?.name ?? 'Unknown Chore'}
                     </p>
@@ -490,7 +518,7 @@ function ScheduleContent() {
                       <Badge variant="outline">Paused</Badge>
                     )}
                   </div>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
                     {schedule.isOptional ? (
                       <span className="flex items-center gap-1">
                         Anyone can pick up
@@ -515,7 +543,31 @@ function ScheduleContent() {
                     {schedule.endDate && ` until ${schedule.endDate}`}
                   </p>
                 </div>
-                <div className="text-right">
+                <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground sm:hidden">
+                  {schedule.isOptional ? (
+                    <span className="flex items-center gap-1">
+                      Anyone can pick up
+                      {schedule.maxPickupsPerPeriod && (
+                        <span> (max {schedule.maxPickupsPerPeriod}/period)</span>
+                      )}
+                    </span>
+                  ) : (
+                    schedule.children?.map((child) => (
+                      <span key={child?._id} className="flex items-center gap-1">
+                        {child?.avatarEmoji} {child?.name}
+                      </span>
+                    ))
+                  )}
+                  <span className="text-xs">
+                    {schedule.scheduleType === 'once' && `One time: ${schedule.startDate}`}
+                    {schedule.scheduleType === 'daily' && 'Daily'}
+                    {schedule.scheduleType === 'weekly' && 'Weekly'}
+                    {schedule.scheduleType === 'custom' &&
+                      `${schedule.scheduleDays?.map((d) => DAYS_OF_WEEK[d].label).join(', ')}`}
+                    {schedule.endDate && ` until ${schedule.endDate}`}
+                  </span>
+                </div>
+                <div className="hidden sm:block text-right shrink-0">
                   <p className="font-semibold text-green-600">
                     {formatCurrency(schedule.reward, currency)}
                   </p>
@@ -523,7 +575,7 @@ function ScheduleContent() {
                     <p className="text-xs text-muted-foreground">total</p>
                   )}
                 </div>
-                <div className="flex gap-1">
+                <div className="flex gap-1 shrink-0 self-end sm:self-auto">
                   <Button
                     variant="ghost"
                     size="icon"
@@ -736,7 +788,7 @@ function ScheduleContent() {
             {scheduleType === 'custom' && (
               <div className="space-y-2">
                 <Label>Days of Week</Label>
-                <div className="flex gap-1">
+                <div className="flex flex-wrap gap-1">
                   {DAYS_OF_WEEK.map((day) => (
                     <button
                       key={day.value}
