@@ -1,5 +1,5 @@
 import { v } from 'convex/values'
-import { query, mutation } from './_generated/server'
+import { query, mutation, internalMutation } from './_generated/server'
 import { generateAccessCode } from './lib/hash'
 
 // List all children
@@ -102,13 +102,25 @@ export const remove = mutation({
     }
 
     // Delete related data
-    // Delete chore participants
+    // Delete chore participants and track affected instances
     const participants = await ctx.db
       .query('choreParticipants')
       .withIndex('by_child', (q) => q.eq('childId', args.id))
       .collect()
+    const affectedInstanceIds = new Set(participants.map((p) => p.choreInstanceId))
     for (const p of participants) {
       await ctx.db.delete(p._id)
+    }
+
+    // Delete choreInstances that now have no participants
+    for (const instanceId of affectedInstanceIds) {
+      const remainingParticipants = await ctx.db
+        .query('choreParticipants')
+        .withIndex('by_instance', (q) => q.eq('choreInstanceId', instanceId))
+        .first()
+      if (!remainingParticipants) {
+        await ctx.db.delete(instanceId)
+      }
     }
 
     // Delete withdrawals
@@ -120,8 +132,19 @@ export const remove = mutation({
       await ctx.db.delete(w._id)
     }
 
-    // Note: We don't delete scheduledChores as they might have other children
-    // The UI should handle removing this child from childIds arrays
+    // Remove child from scheduledChores.childIds arrays
+    const allSchedules = await ctx.db.query('scheduledChores').collect()
+    for (const schedule of allSchedules) {
+      if (schedule.childIds.includes(args.id)) {
+        const newChildIds = schedule.childIds.filter((id) => id !== args.id)
+        if (newChildIds.length === 0 && !schedule.isOptional) {
+          // Schedule has no children and isn't optional - deactivate it
+          await ctx.db.patch(schedule._id, { childIds: newChildIds, isActive: false })
+        } else {
+          await ctx.db.patch(schedule._id, { childIds: newChildIds })
+        }
+      }
+    }
 
     await ctx.db.delete(args.id)
 
@@ -218,5 +241,74 @@ export const adjustBalance = mutation({
     await ctx.db.patch(args.id, { balance: args.newBalance })
 
     return { newBalance: args.newBalance, difference }
+  },
+})
+
+// Private mutation to cleanup orphaned child references
+// Run this if data gets out of sync (e.g., after failed deletions)
+export const cleanupOrphanedReferences = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    // Get all valid child IDs
+    const children = await ctx.db.query('children').collect()
+    const validChildIds = new Set(children.map((c) => c._id))
+
+    let cleanedSchedules = 0
+    let deletedParticipants = 0
+    let deletedInstances = 0
+    let deletedWithdrawals = 0
+
+    // Clean up scheduledChores.childIds - remove orphaned references
+    const allSchedules = await ctx.db.query('scheduledChores').collect()
+    for (const schedule of allSchedules) {
+      const validIds = schedule.childIds.filter((id) => validChildIds.has(id))
+      if (validIds.length !== schedule.childIds.length) {
+        if (validIds.length === 0 && !schedule.isOptional) {
+          // Schedule has no valid children and isn't optional - deactivate it
+          await ctx.db.patch(schedule._id, { childIds: validIds, isActive: false })
+        } else {
+          await ctx.db.patch(schedule._id, { childIds: validIds })
+        }
+        cleanedSchedules++
+      }
+    }
+
+    // Delete choreParticipants with orphaned childId
+    const allParticipants = await ctx.db.query('choreParticipants').collect()
+    for (const participant of allParticipants) {
+      if (!validChildIds.has(participant.childId)) {
+        await ctx.db.delete(participant._id)
+        deletedParticipants++
+      }
+    }
+
+    // Delete choreInstances with no participants
+    const allInstances = await ctx.db.query('choreInstances').collect()
+    for (const instance of allInstances) {
+      const hasParticipants = await ctx.db
+        .query('choreParticipants')
+        .withIndex('by_instance', (q) => q.eq('choreInstanceId', instance._id))
+        .first()
+      if (!hasParticipants) {
+        await ctx.db.delete(instance._id)
+        deletedInstances++
+      }
+    }
+
+    // Delete withdrawals with orphaned childId
+    const allWithdrawals = await ctx.db.query('withdrawals').collect()
+    for (const withdrawal of allWithdrawals) {
+      if (!validChildIds.has(withdrawal.childId)) {
+        await ctx.db.delete(withdrawal._id)
+        deletedWithdrawals++
+      }
+    }
+
+    return {
+      cleanedSchedules,
+      deletedParticipants,
+      deletedInstances,
+      deletedWithdrawals,
+    }
   },
 })
