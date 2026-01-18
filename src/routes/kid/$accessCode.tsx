@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import { EmptyState } from '@/components/ui/empty-state'
 import { formatCurrency } from '@/lib/currency'
 import { Check, Clock, Users, Star, PartyPopper, HandCoins, Sparkles } from 'lucide-react'
+import { TTSButton } from '@/components/ui/tts-button'
 import { useState } from 'react'
 
 export const Route = createFileRoute('/kid/$accessCode')({
@@ -193,9 +194,12 @@ function KidDashboardContent({
                       </div>
 
                       <div className="flex-1">
-                        <h3 className="text-lg font-bold text-purple-900">
-                          {chore.template?.name ?? 'Chore'}
-                        </h3>
+                        <div className="flex items-center gap-1">
+                          <h3 className="text-lg font-bold text-purple-900">
+                            {chore.template?.name ?? 'Chore'}
+                          </h3>
+                          <TTSButton text={chore.template?.name ?? 'Chore'} />
+                        </div>
 
                         {chore.isJoined && teammates && teammates.length > 0 && (
                           <div className="mt-1 flex items-center gap-1 text-sm text-muted-foreground">
@@ -272,9 +276,12 @@ function KidDashboardContent({
                       </div>
 
                       <div className="flex-1">
-                        <h3 className="text-lg font-bold text-green-800">
-                          {chore.template?.name ?? 'Chore'}
-                        </h3>
+                        <div className="flex items-center gap-1">
+                          <h3 className="text-lg font-bold text-green-800">
+                            {chore.template?.name ?? 'Chore'}
+                          </h3>
+                          <TTSButton text={chore.template?.name ?? 'Chore'} />
+                        </div>
                         <p className="text-sm text-green-600">
                           {chore.status === 'completed'
                             ? 'Completed & Reviewed!'
@@ -336,9 +343,12 @@ function KidDashboardContent({
                       </div>
 
                       <div className="flex-1">
-                        <h3 className="text-lg font-bold text-amber-900">
-                          {chore.template?.name ?? 'Chore'}
-                        </h3>
+                        <div className="flex items-center gap-1">
+                          <h3 className="text-lg font-bold text-amber-900">
+                            {chore.template?.name ?? 'Chore'}
+                          </h3>
+                          <TTSButton text={chore.template?.name ?? 'Chore'} />
+                        </div>
 
                         <div className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
                           <Badge variant="outline" className="text-xs">
@@ -410,9 +420,12 @@ function KidDashboardContent({
                       {chore.template?.icon ?? '📋'}
                     </div>
                     <div className="flex-1">
-                      <p className="font-medium">
-                        {chore.template?.name ?? 'Chore'}
-                      </p>
+                      <div className="flex items-center gap-1">
+                        <p className="font-medium">
+                          {chore.template?.name ?? 'Chore'}
+                        </p>
+                        <TTSButton text={chore.template?.name ?? 'Chore'} />
+                      </div>
                       <p className="text-xs text-muted-foreground">
                         {chore.dueDate}
                       </p>

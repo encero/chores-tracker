@@ -1,6 +1,7 @@
 import { HeadContent, Outlet, Scripts, createRootRoute } from '@tanstack/react-router'
 
 import ConvexProvider from '../integrations/convex/provider'
+import { getEnvScript } from '../lib/env'
 
 import appCss from '../styles.css?url'
 
@@ -44,6 +45,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <HeadContent />
       </head>
       <body>
+        <script dangerouslySetInnerHTML={{ __html: getEnvScript() }} />
         <ConvexProvider>{children}</ConvexProvider>
         <Scripts />
       </body>

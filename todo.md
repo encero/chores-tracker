@@ -1,2 +1,1 @@
-- [ ] i want ot upload kids images to the app, use https://www.convex.dev/components/cloudflare-r2 as storage with public domain for the bucket. 
-- [ ] for kids that cant read yet i want support for tts on the names of the chores so they can indepedently know what they are supposed to do
+- [x] for kids that cant read yet i want support for tts on the names of the chores so they can indepedently know what they are supposed to do
