@@ -1,0 +1,51 @@
+import { formatCurrency } from '@/lib/currency'
+
+interface KidLayoutProps {
+  children: React.ReactNode
+  childName: string
+  avatarEmoji: string
+  balance: number
+  currency?: string
+}
+
+export function KidLayout({
+  children,
+  childName,
+  avatarEmoji,
+  balance,
+  currency = '$',
+}: KidLayoutProps) {
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-purple-50">
+      {/* Kid-friendly Header */}
+      <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-sm border-b border-purple-100">
+        <div className="container flex h-20 items-center justify-between px-4">
+          {/* Avatar and Name */}
+          <div className="flex items-center gap-3">
+            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-yellow-200 to-orange-200 text-3xl shadow-md">
+              {avatarEmoji}
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Hello,</p>
+              <h1 className="text-xl font-bold text-purple-900">{childName}!</h1>
+            </div>
+          </div>
+
+          {/* Balance Display - Piggy Bank Style */}
+          <div className="flex items-center gap-2 rounded-full bg-gradient-to-r from-pink-100 to-pink-200 px-4 py-2 shadow-md">
+            <span className="text-2xl">🐷</span>
+            <div className="text-right">
+              <p className="text-xs text-pink-700">Your Balance</p>
+              <p className="text-lg font-bold text-pink-900">
+                {formatCurrency(balance, currency)}
+              </p>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="container px-4 py-6">{children}</main>
+    </div>
+  )
+}

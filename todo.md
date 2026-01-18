@@ -1,0 +1,5 @@
+- [ ] there is no way to return from kids page back to login
+- [ ] i want a way to create adhoc chores, from templates, it will be scheduled immediately and wont repeat
+- [ ] marking joined chore for one kid closed it entirely, it show as pending on the other child but it cant be completed or changed
+- [ ] there is no way to change the schedule only pause it and delete it
+- [ ] i want to manually change the balance of a kid if corrections needs to be made
