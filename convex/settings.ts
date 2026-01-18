@@ -16,6 +16,7 @@ export const initialize = mutation({
   args: {
     pin: v.string(),
     currency: v.optional(v.string()),
+    ttsLanguage: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     // Check if settings already exist
@@ -30,17 +31,19 @@ export const initialize = mutation({
       pinHash,
       sessionDurationDays: 7,
       currency: args.currency ?? '$',
+      ttsLanguage: args.ttsLanguage ?? 'cs-CZ',
     })
 
     return { success: true }
   },
 })
 
-// Update settings (currency, session duration)
+// Update settings (currency, session duration, TTS language)
 export const update = mutation({
   args: {
     currency: v.optional(v.string()),
     sessionDurationDays: v.optional(v.number()),
+    ttsLanguage: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const settings = await ctx.db.query('settings').first()
@@ -53,6 +56,7 @@ export const update = mutation({
       ...(args.sessionDurationDays !== undefined && {
         sessionDurationDays: args.sessionDurationDays,
       }),
+      ...(args.ttsLanguage !== undefined && { ttsLanguage: args.ttsLanguage }),
     })
 
     return { success: true }

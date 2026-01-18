@@ -3,11 +3,12 @@ import { useTTS } from '@/hooks/useTTS'
 
 interface TTSButtonProps {
   text: string
+  language?: string
   className?: string
 }
 
-export function TTSButton({ text, className = '' }: TTSButtonProps) {
-  const { speak, stop, isSpeaking, isSupported } = useTTS()
+export function TTSButton({ text, language, className = '' }: TTSButtonProps) {
+  const { speak, stop, isSpeaking, isSupported } = useTTS({ language })
 
   if (!isSupported) return null
 

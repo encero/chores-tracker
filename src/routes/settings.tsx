@@ -33,6 +33,7 @@ function SettingsContent() {
   const [sessionDays, setSessionDays] = useState(
     settings?.sessionDurationDays?.toString() ?? '7'
   )
+  const [ttsLanguage, setTtsLanguage] = useState(settings?.ttsLanguage ?? 'cs-CZ')
   const [saving, setSaving] = useState(false)
 
   const [currentPin, setCurrentPin] = useState('')
@@ -48,6 +49,7 @@ function SettingsContent() {
       await updateSettings({
         currency,
         sessionDurationDays: parseInt(sessionDays),
+        ttsLanguage,
       })
     } finally {
       setSaving(false)
@@ -132,6 +134,23 @@ function SettingsContent() {
                   <SelectItem value="7">7 days</SelectItem>
                   <SelectItem value="14">14 days</SelectItem>
                   <SelectItem value="30">30 days</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="ttsLanguage">Text-to-Speech Language</Label>
+              <Select value={ttsLanguage} onValueChange={setTtsLanguage}>
+                <SelectTrigger id="ttsLanguage">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="cs-CZ">Čeština (Czech)</SelectItem>
+                  <SelectItem value="en-US">English (US)</SelectItem>
+                  <SelectItem value="en-GB">English (UK)</SelectItem>
+                  <SelectItem value="de-DE">Deutsch (German)</SelectItem>
+                  <SelectItem value="sk-SK">Slovenčina (Slovak)</SelectItem>
+                  <SelectItem value="pl-PL">Polski (Polish)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
