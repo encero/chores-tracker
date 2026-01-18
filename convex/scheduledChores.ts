@@ -461,6 +461,42 @@ export const pickup = mutation({
       throw new Error('Child not found')
     }
 
+    // Check if child has completed all their daily chores before allowing optional pickup
+    const allSchedules = await ctx.db.query('scheduledChores').collect()
+    const childAssignedSchedules = allSchedules.filter(
+      (s) => s.isActive && !s.isOptional && s.childIds.includes(args.childId)
+    )
+
+    for (const assignedSchedule of childAssignedSchedules) {
+      // Check if this schedule should have an instance today
+      if (!shouldCreateInstance(assignedSchedule, today)) continue
+
+      // Find today's instance for this schedule
+      const instance = await ctx.db
+        .query('choreInstances')
+        .withIndex('by_scheduled_chore', (q) => q.eq('scheduledChoreId', assignedSchedule._id))
+        .filter((q) => q.eq(q.field('dueDate'), today))
+        .first()
+
+      if (!instance) {
+        // Instance should exist but doesn't - treat as incomplete
+        const template = await ctx.db.get(assignedSchedule.choreTemplateId)
+        throw new Error(`You must complete all your daily chores first! "${template?.name ?? 'Unknown chore'}" is not done yet.`)
+      }
+
+      // Check if this child's participation is marked as done
+      const participation = await ctx.db
+        .query('choreParticipants')
+        .withIndex('by_instance', (q) => q.eq('choreInstanceId', instance._id))
+        .filter((q) => q.eq(q.field('childId'), args.childId))
+        .first()
+
+      if (!participation || participation.status !== 'done') {
+        const template = await ctx.db.get(assignedSchedule.choreTemplateId)
+        throw new Error(`You must complete all your daily chores first! "${template?.name ?? 'Unknown chore'}" is not done yet.`)
+      }
+    }
+
     // Get the schedule
     const schedule = await ctx.db.get(args.scheduledChoreId)
     if (!schedule) {

@@ -26,7 +26,7 @@ export function KidLayout({
           <Link
             to="/login"
             className="flex h-10 w-10 items-center justify-center rounded-full bg-purple-100 text-purple-600 hover:bg-purple-200 transition-colors"
-            title="Back to Home"
+            title="Zpět domů"
           >
             <Home className="h-5 w-5" />
           </Link>
@@ -37,7 +37,7 @@ export function KidLayout({
               {avatarEmoji}
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Hello,</p>
+              <p className="text-sm text-muted-foreground">Ahoj,</p>
               <h1 className="text-xl font-bold text-purple-900">{childName}!</h1>
             </div>
           </div>
@@ -46,7 +46,7 @@ export function KidLayout({
           <div className="flex items-center gap-2 rounded-full bg-gradient-to-r from-pink-100 to-pink-200 px-4 py-2 shadow-md">
             <span className="text-2xl">🐷</span>
             <div className="text-right">
-              <p className="text-xs text-pink-700">Your Balance</p>
+              <p className="text-xs text-pink-700">Tvůj zůstatek</p>
               <p className="text-lg font-bold text-pink-900">
                 {formatCurrency(balance, currency)}
               </p>

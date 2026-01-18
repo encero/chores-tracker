@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { EmptyState } from '@/components/ui/empty-state'
 import { formatCurrency } from '@/lib/currency'
-import { Check, Clock, Users, Star, PartyPopper, HandCoins, Sparkles } from 'lucide-react'
+import { Check, Clock, Users, Star, PartyPopper, HandCoins, Sparkles, Lock } from 'lucide-react'
 import { TTSButton } from '@/components/ui/tts-button'
 import { useState } from 'react'
 
@@ -27,7 +27,7 @@ function KidDashboard() {
       <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-blue-50 to-purple-50">
         <div className="flex flex-col items-center gap-4">
           <div className="h-12 w-12 animate-spin rounded-full border-4 border-purple-500 border-t-transparent" />
-          <p className="text-lg text-purple-600">Loading...</p>
+          <p className="text-lg text-purple-600">Načítání...</p>
         </div>
       </div>
     )
@@ -39,10 +39,10 @@ function KidDashboard() {
         <div className="text-center">
           <span className="text-6xl">🔍</span>
           <h1 className="mt-4 text-2xl font-bold text-purple-900">
-            Access Code Not Found
+            Přístupový kód nenalezen
           </h1>
           <p className="mt-2 text-muted-foreground">
-            Please check your access code and try again
+            Zkontroluj prosím svůj přístupový kód a zkus to znovu
           </p>
         </div>
       </div>
@@ -155,7 +155,8 @@ function KidDashboardContent({
       <section>
         <h2 className="mb-4 flex items-center gap-2 text-xl font-bold text-purple-900">
           <Clock className="h-5 w-5" />
-          Today's Chores
+          Dnešní úkoly
+          <TTSButton text="Dnešní úkoly" language={ttsLanguage} />
         </h2>
 
         {pendingChores.length === 0 && completedChores.length === 0 ? (
@@ -163,9 +164,9 @@ function KidDashboardContent({
             <CardContent className="py-8 text-center">
               <span className="text-4xl">🎉</span>
               <p className="mt-2 text-lg font-medium text-purple-900">
-                No chores for today!
+                Dnes žádné úkoly!
               </p>
-              <p className="text-muted-foreground">Enjoy your free time!</p>
+              <p className="text-muted-foreground">Užij si volný čas!</p>
             </CardContent>
           </Card>
         ) : (
@@ -207,7 +208,7 @@ function KidDashboardContent({
                         {teammates && teammates.length > 0 && (
                           <div className="mt-1 flex items-center gap-1 text-sm text-muted-foreground">
                             <Users className="h-4 w-4" />
-                            <span>With </span>
+                            <span>S </span>
                             {teammates.map((t, i) => (
                               <span key={t.childId}>
                                 {t.child?.avatarEmoji} {t.child?.name}
@@ -230,7 +231,7 @@ function KidDashboardContent({
                           {chore.isJoined && (
                             <span className="text-sm font-normal text-muted-foreground">
                               {' '}
-                              (your share)
+                              (tvůj podíl)
                             </span>
                           )}
                         </p>
@@ -287,8 +288,8 @@ function KidDashboardContent({
                         </div>
                         <p className="text-sm text-green-600">
                           {chore.status === 'completed'
-                            ? 'Completed & Reviewed!'
-                            : 'Waiting for review...'}
+                            ? 'Hotovo a zkontrolováno!'
+                            : 'Čeká na kontrolu...'}
                         </p>
                       </div>
 
@@ -298,15 +299,18 @@ function KidDashboardContent({
                           className="text-base px-3 py-1"
                         >
                           {chore.quality === 'excellent' && '⭐ '}
-                          {chore.quality.charAt(0).toUpperCase() +
-                            chore.quality.slice(1)}
+                          {chore.quality === 'excellent' ? 'Výborně' :
+                           chore.quality === 'good' ? 'Dobře' :
+                           chore.quality === 'bad' ? 'Špatně' :
+                           chore.quality === 'failed' ? 'Nesplněno' :
+                           chore.quality}
                         </Badge>
                       )}
 
                       {chore.status === 'pending' && (
                         <Badge variant="reviewing" className="text-base px-3 py-1">
                           <Clock className="mr-1 h-4 w-4" />
-                          Pending
+                          Čeká
                         </Badge>
                       )}
                     </div>
@@ -323,12 +327,40 @@ function KidDashboardContent({
         <section>
           <h2 className="mb-4 flex items-center gap-2 text-xl font-bold text-purple-900">
             <Sparkles className="h-5 w-5" />
-            Extra Chores Available
+            Dostupné extra úkoly
+            <TTSButton text="Dostupné extra úkoly" language={ttsLanguage} />
           </h2>
+
+          {/* Show message when daily chores are not done */}
+          {pendingChores.length > 0 && (
+            <Card className="mb-4 border-2 border-orange-300 bg-orange-50">
+              <CardContent className="py-4">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-orange-100">
+                    <Lock className="h-6 w-6 text-orange-600" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-semibold text-orange-800">
+                      Nejdřív dokonči své denní úkoly!
+                    </p>
+                    <p className="text-sm text-orange-600">
+                      Dokonči všechny úkoly výše, abys odemkl/a extra úkoly.
+                    </p>
+                  </div>
+                  <TTSButton
+                    text="Musíš dokončit všechny své denní úkoly, než si můžeš vzít extra úkoly."
+                    language={ttsLanguage}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           <div className="space-y-3">
             {availableOptional.map((chore) => {
               if (!chore) return null
+
+              const isLocked = pendingChores.length > 0
 
               return (
                 <Card
@@ -336,18 +368,24 @@ function KidDashboardContent({
                   className={`border-2 transition-all ${
                     justPickedUp === chore._id
                       ? 'border-green-400 bg-green-50'
-                      : 'border-amber-200 bg-amber-50/50'
+                      : isLocked
+                        ? 'border-gray-200 bg-gray-50/50 opacity-60'
+                        : 'border-amber-200 bg-amber-50/50'
                   }`}
                 >
                   <CardContent className="py-4">
                     <div className="flex items-center gap-4">
-                      <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-amber-100 to-orange-100 text-3xl shadow-sm">
+                      <div className={`flex h-14 w-14 items-center justify-center rounded-xl text-3xl shadow-sm ${
+                        isLocked
+                          ? 'bg-gray-100'
+                          : 'bg-gradient-to-br from-amber-100 to-orange-100'
+                      }`}>
                         {chore.template?.icon ?? '📋'}
                       </div>
 
                       <div className="flex-1">
                         <div className="flex items-center gap-1">
-                          <h3 className="text-lg font-bold text-amber-900">
+                          <h3 className={`text-lg font-bold ${isLocked ? 'text-gray-500' : 'text-amber-900'}`}>
                             {chore.template?.name ?? 'Chore'}
                           </h3>
                           <TTSButton text={chore.template?.name ?? 'Chore'} language={ttsLanguage} />
@@ -355,19 +393,19 @@ function KidDashboardContent({
 
                         <div className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
                           <Badge variant="outline" className="text-xs">
-                            {chore.scheduleType === 'daily' && 'Daily'}
-                            {chore.scheduleType === 'weekly' && 'Weekly'}
-                            {chore.scheduleType === 'once' && 'One-time'}
-                            {chore.scheduleType === 'custom' && 'Custom'}
+                            {chore.scheduleType === 'daily' && 'Denní'}
+                            {chore.scheduleType === 'weekly' && 'Týdenní'}
+                            {chore.scheduleType === 'once' && 'Jednorázový'}
+                            {chore.scheduleType === 'custom' && 'Vlastní'}
                           </Badge>
                           {chore.maxPickups !== undefined && (
                             <span className="text-xs">
-                              {chore.pickupCount}/{chore.maxPickups} done
+                              {chore.pickupCount}/{chore.maxPickups} hotovo
                             </span>
                           )}
                         </div>
 
-                        <p className="mt-1 text-lg font-semibold text-green-600">
+                        <p className={`mt-1 text-lg font-semibold ${isLocked ? 'text-gray-400' : 'text-green-600'}`}>
                           {formatCurrency(chore.reward, currency)}
                         </p>
                       </div>
@@ -377,19 +415,23 @@ function KidDashboardContent({
                         className={`h-14 px-4 rounded-xl shadow-lg ${
                           justPickedUp === chore._id
                             ? 'bg-green-500'
-                            : 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600'
+                            : isLocked
+                              ? 'bg-gray-400 cursor-not-allowed'
+                              : 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600'
                         }`}
                         onClick={() => handlePickup(chore._id)}
-                        disabled={pickingUp === chore._id || justPickedUp === chore._id}
+                        disabled={pickingUp === chore._id || justPickedUp === chore._id || isLocked}
                       >
                         {pickingUp === chore._id ? (
                           <div className="h-6 w-6 animate-spin rounded-full border-3 border-white border-t-transparent" />
                         ) : justPickedUp === chore._id ? (
                           <Check className="h-6 w-6" />
+                        ) : isLocked ? (
+                          <Lock className="h-5 w-5" />
                         ) : (
                           <>
                             <HandCoins className="h-5 w-5 mr-2" />
-                            Pick Up
+                            Vzít
                           </>
                         )}
                       </Button>
@@ -407,7 +449,8 @@ function KidDashboardContent({
         <section>
           <h2 className="mb-4 flex items-center gap-2 text-xl font-bold text-purple-900">
             <Star className="h-5 w-5" />
-            Recent Earnings
+            Nedávné výdělky
+            <TTSButton text="Nedávné výdělky" language={ttsLanguage} />
           </h2>
 
           <div className="space-y-2">
@@ -439,12 +482,16 @@ function KidDashboardContent({
                       </p>
                       {chore.isJoined && myParticipation?.effortPercent && (
                         <p className="text-xs text-muted-foreground">
-                          {myParticipation.effortPercent.toFixed(0)}% effort
+                          {myParticipation.effortPercent.toFixed(0)}% úsilí
                         </p>
                       )}
                     </div>
                     <Badge variant={chore.quality ?? 'default'} className="text-xs">
-                      {chore.quality ?? 'N/A'}
+                      {chore.quality === 'excellent' ? 'Výborně' :
+                       chore.quality === 'good' ? 'Dobře' :
+                       chore.quality === 'bad' ? 'Špatně' :
+                       chore.quality === 'failed' ? 'Nesplněno' :
+                       chore.quality ?? 'N/A'}
                     </Badge>
                   </CardContent>
                 </Card>

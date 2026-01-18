@@ -34,7 +34,7 @@ export function ParentLayout({ children }: ParentLayoutProps) {
       <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-14 items-center">
           <div className="mr-4 flex">
-            <Link to="/" className="mr-6 flex items-center space-x-2">
+            <Link to="/login" className="mr-6 flex items-center space-x-2">
               <span className="text-xl">🏠</span>
               <span className="font-bold">Chores</span>
             </Link>

@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { formatCurrency } from '@/lib/currency'
 import { Check, Clock, Users, Lock, ChevronDown, ChevronUp } from 'lucide-react'
+import { TTSButton } from '@/components/ui/tts-button'
 
 export const Route = createFileRoute('/login')({
   component: LoginPage,
@@ -28,6 +29,7 @@ function LoginPage() {
   const [expandedDone, setExpandedDone] = useState<Set<string>>(new Set())
 
   const currency = settings?.currency ?? '$'
+  const ttsLanguage = settings?.ttsLanguage ?? 'cs-CZ'
 
   // Redirect to setup if no PIN is set
   useEffect(() => {
@@ -66,7 +68,7 @@ function LoginPage() {
       <div className="flex min-h-screen items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-          <p className="text-muted-foreground">Loading...</p>
+          <p className="text-muted-foreground">Načítání...</p>
         </div>
       </div>
     )
@@ -104,7 +106,7 @@ function LoginPage() {
         <div className="container flex items-center justify-between py-3">
           <div className="flex items-center gap-2">
             <span className="text-2xl">🏠</span>
-            <span className="font-semibold text-purple-900">Chores</span>
+            <span className="font-semibold text-purple-900">Úkoly</span>
           </div>
           {isAuthenticated ? (
             <Link to="/">
@@ -123,7 +125,7 @@ function LoginPage() {
               onClick={() => setShowPinPad(false)}
               className="text-muted-foreground"
             >
-              Cancel
+              Zrušit
             </Button>
           ) : (
             <Button
@@ -133,7 +135,7 @@ function LoginPage() {
               className="text-muted-foreground"
             >
               <Lock className="mr-1 h-3 w-3" />
-              Parent
+              Rodič
             </Button>
           )}
         </div>
@@ -145,7 +147,7 @@ function LoginPage() {
           <div className="bg-white rounded-2xl p-6 shadow-xl mx-4 max-w-sm w-full">
             <PinPad
               onSubmit={handleLogin}
-              title="Parent PIN"
+              title="PIN rodiče"
               showRememberMe={true}
             />
             <Button
@@ -153,7 +155,7 @@ function LoginPage() {
               className="w-full mt-4"
               onClick={() => setShowPinPad(false)}
             >
-              Cancel
+              Zrušit
             </Button>
           </div>
         </div>
@@ -164,7 +166,8 @@ function LoginPage() {
         <div className="mb-6 text-center">
           <h1 className="text-3xl font-bold text-purple-900 flex items-center justify-center gap-2">
             <Clock className="h-7 w-7" />
-            Today's Chores
+            Dnešní úkoly
+            <TTSButton text="Dnešní úkoly" language={ttsLanguage} />
           </h1>
         </div>
 
@@ -172,7 +175,7 @@ function LoginPage() {
         {children && children.length > 0 && (
           <div className="mb-6 pb-6 border-b border-purple-200">
             <p className="text-sm text-muted-foreground mb-3 text-center">
-              Go to your personal dashboard:
+              Přejdi na svůj osobní přehled:
             </p>
             <div className="flex flex-wrap justify-center gap-3">
               {children.map((child) => (
@@ -192,15 +195,15 @@ function LoginPage() {
         {!children || children.length === 0 ? (
           <Card className="border-dashed bg-white/70">
             <CardContent className="py-8 text-center text-muted-foreground">
-              No children added yet. Log in to get started!
+              Zatím nejsou přidány žádné děti. Přihlas se pro začátek!
             </CardContent>
           </Card>
         ) : choresByChild.size === 0 ? (
           <Card className="border-dashed bg-white/70">
             <CardContent className="py-8 text-center">
               <span className="text-4xl">🎉</span>
-              <p className="mt-2 font-medium">No chores scheduled for today!</p>
-              <p className="text-sm text-muted-foreground">Enjoy your day off!</p>
+              <p className="mt-2 font-medium">Na dnešek nejsou naplánovány žádné úkoly!</p>
+              <p className="text-sm text-muted-foreground">Užij si volný den!</p>
             </CardContent>
           </Card>
         ) : (
@@ -238,17 +241,17 @@ function LoginPage() {
                       </h3>
                       <p className="text-sm text-muted-foreground">
                         {pendingCount > 0 ? (
-                          <span>{pendingCount} to do</span>
+                          <span>{pendingCount} ke splnění</span>
                         ) : (
-                          <span className="text-green-600 font-medium">All done!</span>
+                          <span className="text-green-600 font-medium">Vše hotovo!</span>
                         )}
                         {doneCount > 0 && pendingCount > 0 && (
-                          <span> · {doneCount} done</span>
+                          <span> · {doneCount} hotovo</span>
                         )}
                       </p>
                     </div>
                     <Badge variant={pendingCount > 0 ? 'pending' : 'completed'} className="text-sm">
-                      {pendingCount > 0 ? `${pendingCount} left` : 'Done!'}
+                      {pendingCount > 0 ? `${pendingCount} zbývá` : 'Hotovo!'}
                     </Badge>
                   </Link>
 
@@ -269,13 +272,16 @@ function LoginPage() {
                             {chore.template?.icon ?? '📋'}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="font-medium truncate">
-                              {chore.template?.name ?? 'Chore'}
-                            </p>
+                            <div className="flex items-center gap-1">
+                              <p className="font-medium truncate">
+                                {chore.template?.name ?? 'Chore'}
+                              </p>
+                              <TTSButton text={chore.template?.name ?? 'Chore'} language={ttsLanguage} />
+                            </div>
                             {chore.isJoined && (
                               <p className="text-xs text-muted-foreground flex items-center gap-1">
                                 <Users className="h-3 w-3" />
-                                With{' '}
+                                S{' '}
                                 {chore.participants
                                   ?.filter((p) => p.childId !== child._id)
                                   .map((p) => p.child?.name)
@@ -307,7 +313,7 @@ function LoginPage() {
                             ) : (
                               <>
                                 <Check className="h-4 w-4 mr-1" />
-                                Done
+                                Hotovo
                               </>
                             )}
                           </Button>
@@ -326,12 +332,12 @@ function LoginPage() {
                           {isDoneExpanded ? (
                             <>
                               <ChevronUp className="h-4 w-4" />
-                              Hide {doneCount} completed
+                              Skrýt {doneCount} hotových
                             </>
                           ) : (
                             <>
                               <ChevronDown className="h-4 w-4" />
-                              Show {doneCount} completed
+                              Zobrazit {doneCount} hotových
                             </>
                           )}
                         </button>
@@ -348,13 +354,16 @@ function LoginPage() {
                                 {chore.template?.icon ?? '📋'}
                               </div>
                               <div className="flex-1 min-w-0">
-                                <p className="font-medium truncate text-green-800">
-                                  {chore.template?.name ?? 'Chore'}
-                                </p>
+                                <div className="flex items-center gap-1">
+                                  <p className="font-medium truncate text-green-800">
+                                    {chore.template?.name ?? 'Chore'}
+                                  </p>
+                                  <TTSButton text={chore.template?.name ?? 'Chore'} language={ttsLanguage} />
+                                </div>
                                 {chore.isJoined && (
                                   <p className="text-xs text-muted-foreground flex items-center gap-1">
                                     <Users className="h-3 w-3" />
-                                    With{' '}
+                                    S{' '}
                                     {chore.participants
                                       ?.filter((p) => p.childId !== child._id)
                                       .map((p) => p.child?.name)

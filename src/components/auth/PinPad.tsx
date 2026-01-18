@@ -16,7 +16,7 @@ interface PinPadProps {
 
 export function PinPad({
   onSubmit,
-  title = 'Enter PIN',
+  title = 'Zadej PIN',
   subtitle,
   showRememberMe = true,
   minLength = 4,
@@ -50,7 +50,7 @@ export function PinPad({
 
   const handleSubmit = useCallback(async () => {
     if (pin.length < minLength) {
-      setError(`PIN must be at least ${minLength} digits`)
+      setError(`PIN musí mít alespoň ${minLength} číslic`)
       return
     }
 
@@ -60,13 +60,13 @@ export function PinPad({
     try {
       const success = await onSubmit(pin, rememberMe)
       if (!success) {
-        setError('Incorrect PIN')
+        setError('Nesprávný PIN')
         setShake(true)
         setTimeout(() => setShake(false), 500)
         setPin('')
       }
     } catch {
-      setError('An error occurred')
+      setError('Nastala chyba')
       setPin('')
     } finally {
       setIsLoading(false)
@@ -148,7 +148,7 @@ export function PinPad({
             onCheckedChange={(checked) => setRememberMe(checked === true)}
           />
           <Label htmlFor="remember" className="text-sm text-muted-foreground">
-            Remember me for 30 days
+            Zapamatovat na 30 dní
           </Label>
         </div>
       )}
@@ -160,7 +160,7 @@ export function PinPad({
         onClick={handleSubmit}
         disabled={pin.length < minLength || isLoading}
       >
-        {isLoading ? 'Checking...' : 'Unlock'}
+        {isLoading ? 'Kontroluji...' : 'Odemknout'}
       </Button>
 
       {/* Clear Button */}
@@ -170,7 +170,7 @@ export function PinPad({
         onClick={handleClear}
         disabled={pin.length === 0 || isLoading}
       >
-        Clear
+        Smazat
       </Button>
     </div>
   )

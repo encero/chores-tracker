@@ -26,7 +26,7 @@ export function TTSButton({ text, language, className = '' }: TTSButtonProps) {
       type="button"
       onClick={handleClick}
       className={`inline-flex items-center justify-center rounded-full p-2 transition-colors hover:bg-purple-100 active:bg-purple-200 ${className}`}
-      aria-label={isSpeaking ? 'Stop reading' : `Read "${text}" aloud`}
+      aria-label={isSpeaking ? 'Zastavit čtení' : `Přečíst "${text}" nahlas`}
     >
       {isSpeaking ? (
         <VolumeX className="h-5 w-5 text-purple-600" />
