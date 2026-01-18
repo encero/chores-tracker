@@ -1,32 +1,32 @@
 # Build stage
-FROM node:22-alpine AS builder
+FROM oven/bun:1-alpine AS builder
 
 WORKDIR /app
 
 # Copy package files
-COPY package.json package-lock.json* ./
+COPY package.json bun.lockb* ./
 
 # Install dependencies
-RUN npm ci
+RUN bun install --frozen-lockfile || bun install
 
 # Copy source code
 COPY . .
 
 # Build the application
 # Note: VITE_CONVEX_URL is NOT set here - it will be provided at runtime
-RUN npm run build
+RUN bun run build
 
 # Production stage
-FROM node:22-alpine AS runner
+FROM oven/bun:1-alpine AS runner
 
 WORKDIR /app
 
 # Create non-root user for security
-RUN addgroup --system --gid 1001 nodejs && \
-    adduser --system --uid 1001 app
+RUN addgroup --system --gid 1001 appgroup && \
+    adduser --system --uid 1001 app -G appgroup
 
 # Copy built application from builder
-COPY --from=builder --chown=app:nodejs /app/.output /app/.output
+COPY --from=builder --chown=app:appgroup /app/.output /app/.output
 
 # Switch to non-root user
 USER app
@@ -40,4 +40,4 @@ ENV PORT=3000
 
 # Start the application
 # VITE_CONVEX_URL must be provided at runtime via docker-compose or docker run -e
-CMD ["node", ".output/server/index.mjs"]
+CMD ["bun", "run", ".output/server/index.mjs"]
