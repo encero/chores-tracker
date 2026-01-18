@@ -1,0 +1,1 @@
+- [x] for kids that cant read yet i want support for tts on the names of the chores so they can indepedently know what they are supposed to do
