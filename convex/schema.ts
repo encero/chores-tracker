@@ -7,6 +7,7 @@ export default defineSchema({
     pinHash: v.optional(v.string()), // Hashed parent PIN (null if not set)
     sessionDurationDays: v.number(), // How long sessions last (default: 7)
     currency: v.string(), // Currency symbol (default: "$")
+    ttsLanguage: v.optional(v.string()), // TTS language code (e.g., "cs-CZ", "en-US")
   }),
 
   // Session tokens for authentication

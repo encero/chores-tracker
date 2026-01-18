@@ -1,6 +1,11 @@
 import { useCallback, useState, useEffect } from 'react'
 
-export function useTTS() {
+interface UseTTSOptions {
+  language?: string // BCP 47 language tag (e.g., "cs-CZ", "en-US")
+}
+
+export function useTTS(options: UseTTSOptions = {}) {
+  const { language = 'cs-CZ' } = options
   const [isSpeaking, setIsSpeaking] = useState(false)
   const [isSupported, setIsSupported] = useState(false)
 
@@ -15,6 +20,7 @@ export function useTTS() {
     window.speechSynthesis.cancel()
 
     const utterance = new SpeechSynthesisUtterance(text)
+    utterance.lang = language
     utterance.rate = 0.9 // Slightly slower for kids
     utterance.pitch = 1.1 // Slightly higher pitch, friendlier
 
@@ -23,7 +29,7 @@ export function useTTS() {
     utterance.onerror = () => setIsSpeaking(false)
 
     window.speechSynthesis.speak(utterance)
-  }, [isSupported])
+  }, [isSupported, language])
 
   const stop = useCallback(() => {
     if (!isSupported) return

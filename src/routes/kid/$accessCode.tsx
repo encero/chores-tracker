@@ -50,6 +50,7 @@ function KidDashboard() {
   }
 
   const currency = settings?.currency ?? '$'
+  const ttsLanguage = settings?.ttsLanguage ?? 'cs-CZ'
 
   return (
     <KidLayout
@@ -58,7 +59,7 @@ function KidDashboard() {
       balance={child.balance}
       currency={currency}
     >
-      <KidDashboardContent childId={child._id} currency={currency} />
+      <KidDashboardContent childId={child._id} currency={currency} ttsLanguage={ttsLanguage} />
     </KidLayout>
   )
 }
@@ -66,9 +67,11 @@ function KidDashboard() {
 function KidDashboardContent({
   childId,
   currency,
+  ttsLanguage,
 }: {
   childId: Id<'children'>
   currency: string
+  ttsLanguage: string
 }) {
   const today = new Date().toISOString().split('T')[0]
   const nextWeek = new Date()
@@ -198,7 +201,7 @@ function KidDashboardContent({
                           <h3 className="text-lg font-bold text-purple-900">
                             {chore.template?.name ?? 'Chore'}
                           </h3>
-                          <TTSButton text={chore.template?.name ?? 'Chore'} />
+                          <TTSButton text={chore.template?.name ?? 'Chore'} language={ttsLanguage} />
                         </div>
 
                         {chore.isJoined && teammates && teammates.length > 0 && (
@@ -280,7 +283,7 @@ function KidDashboardContent({
                           <h3 className="text-lg font-bold text-green-800">
                             {chore.template?.name ?? 'Chore'}
                           </h3>
-                          <TTSButton text={chore.template?.name ?? 'Chore'} />
+                          <TTSButton text={chore.template?.name ?? 'Chore'} language={ttsLanguage} />
                         </div>
                         <p className="text-sm text-green-600">
                           {chore.status === 'completed'
@@ -347,7 +350,7 @@ function KidDashboardContent({
                           <h3 className="text-lg font-bold text-amber-900">
                             {chore.template?.name ?? 'Chore'}
                           </h3>
-                          <TTSButton text={chore.template?.name ?? 'Chore'} />
+                          <TTSButton text={chore.template?.name ?? 'Chore'} language={ttsLanguage} />
                         </div>
 
                         <div className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
@@ -424,7 +427,7 @@ function KidDashboardContent({
                         <p className="font-medium">
                           {chore.template?.name ?? 'Chore'}
                         </p>
-                        <TTSButton text={chore.template?.name ?? 'Chore'} />
+                        <TTSButton text={chore.template?.name ?? 'Chore'} language={ttsLanguage} />
                       </div>
                       <p className="text-xs text-muted-foreground">
                         {chore.dueDate}
