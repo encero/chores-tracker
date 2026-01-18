@@ -22,6 +22,8 @@ const badgeVariants = cva(
           "border-transparent bg-green-100 text-green-800",
         missed:
           "border-transparent bg-red-100 text-red-800",
+        failed:
+          "border-transparent bg-gray-200 text-gray-600",
         bad:
           "border-transparent bg-red-100 text-red-800",
         good:

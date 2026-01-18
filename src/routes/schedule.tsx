@@ -449,7 +449,7 @@ function ScheduleContent() {
               : "Add children before scheduling chores"
           }
         />
-      ) : schedules.length === 0 ? (
+      ) : schedules.filter((s) => s.scheduleType !== 'once').length === 0 ? (
         <EmptyState
           icon={<Calendar />}
           title="No scheduled chores"
@@ -463,7 +463,7 @@ function ScheduleContent() {
         />
       ) : (
         <div className="space-y-3">
-          {schedules.map((schedule) => (
+          {schedules.filter((schedule) => schedule.scheduleType !== 'once').map((schedule) => (
             <Card key={schedule._id} className={!schedule.isActive ? 'opacity-60' : ''}>
               <CardContent className="flex items-center gap-4 py-4">
                 <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gray-100 text-2xl">

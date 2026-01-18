@@ -68,7 +68,7 @@ export default defineSchema({
     ),
     completedAt: v.optional(v.number()), // Timestamp when fully complete
     quality: v.optional(
-      v.union(v.literal('bad'), v.literal('good'), v.literal('excellent'))
+      v.union(v.literal('failed'), v.literal('bad'), v.literal('good'), v.literal('excellent'))
     ), // Overall quality rating
     totalReward: v.number(), // Total reward pool for this instance
     notes: v.optional(v.string()), // Optional parent notes
@@ -87,7 +87,7 @@ export default defineSchema({
     effortPercent: v.optional(v.number()), // Effort contribution 0-100 (for joined chores)
     earnedReward: v.optional(v.number()), // Actual reward earned (calculated after review)
     quality: v.optional(
-      v.union(v.literal('bad'), v.literal('good'), v.literal('excellent'))
+      v.union(v.literal('failed'), v.literal('bad'), v.literal('good'), v.literal('excellent'))
     ), // Individual quality rating (for joined chores)
   })
     .index('by_instance', ['choreInstanceId'])

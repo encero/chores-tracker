@@ -28,6 +28,7 @@ export function parseToCents(value: string | number): number {
  * Quality coefficients for reward calculation
  */
 export const QUALITY_COEFFICIENTS = {
+  failed: 0,
   bad: 0.5,
   good: 1.0,
   excellent: 1.25,

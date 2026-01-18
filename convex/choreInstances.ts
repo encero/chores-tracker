@@ -3,6 +3,7 @@ import { query, mutation } from './_generated/server'
 import { Id } from './_generated/dataModel'
 
 const QUALITY_COEFFICIENTS = {
+  failed: 0,
   bad: 0.5,
   good: 1.0,
   excellent: 1.25,
@@ -280,11 +281,55 @@ export const markDone = mutation({
   },
 })
 
+// Unmark a child's part as done (reset to pending) - only available before review
+export const unmarkDone = mutation({
+  args: {
+    instanceId: v.id('choreInstances'),
+    childId: v.id('children'),
+  },
+  handler: async (ctx, args) => {
+    const instance = await ctx.db.get(args.instanceId)
+    if (!instance) {
+      throw new Error('Chore instance not found')
+    }
+
+    if (instance.status !== 'pending') {
+      throw new Error('Chore has already been reviewed')
+    }
+
+    // Find participant record
+    const participant = await ctx.db
+      .query('choreParticipants')
+      .withIndex('by_instance', (q) => q.eq('choreInstanceId', args.instanceId))
+      .filter((q) => q.eq(q.field('childId'), args.childId))
+      .first()
+
+    if (!participant) {
+      throw new Error('Not a participant of this chore')
+    }
+
+    if (participant.status !== 'done') {
+      throw new Error('Participant has not marked this as done')
+    }
+
+    if (participant.quality) {
+      throw new Error('Participant has already been rated')
+    }
+
+    await ctx.db.patch(participant._id, {
+      status: 'pending',
+      completedAt: undefined,
+    })
+
+    return { success: true }
+  },
+})
+
 // Rate a chore (for individual chores)
 export const rate = mutation({
   args: {
     instanceId: v.id('choreInstances'),
-    quality: v.union(v.literal('bad'), v.literal('good'), v.literal('excellent')),
+    quality: v.union(v.literal('failed'), v.literal('bad'), v.literal('good'), v.literal('excellent')),
     notes: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
@@ -366,7 +411,7 @@ export const rate = mutation({
 export const rateJoined = mutation({
   args: {
     instanceId: v.id('choreInstances'),
-    quality: v.union(v.literal('bad'), v.literal('good'), v.literal('excellent')),
+    quality: v.union(v.literal('failed'), v.literal('bad'), v.literal('good'), v.literal('excellent')),
     efforts: v.array(
       v.object({
         childId: v.id('children'),
@@ -450,21 +495,18 @@ export const rateJoined = mutation({
   },
 })
 
-// Rate a single participant in a joined chore individually
+// Rate a single participant in any multi-kid chore individually
 export const rateParticipant = mutation({
   args: {
     instanceId: v.id('choreInstances'),
     childId: v.id('children'),
-    quality: v.union(v.literal('bad'), v.literal('good'), v.literal('excellent')),
+    quality: v.union(v.literal('failed'), v.literal('bad'), v.literal('good'), v.literal('excellent')),
+    effortPercent: v.optional(v.number()), // Custom participation rate (only for joined chores)
   },
   handler: async (ctx, args) => {
     const instance = await ctx.db.get(args.instanceId)
     if (!instance) {
       throw new Error('Chore instance not found')
-    }
-
-    if (!instance.isJoined) {
-      throw new Error('Use rate() for individual chores')
     }
 
     if (instance.status !== 'pending') {
@@ -486,21 +528,33 @@ export const rateParticipant = mutation({
       throw new Error('Participant already rated')
     }
 
-    // Get all participants to calculate equal share
+    // Get all participants to calculate share
     const allParticipants = await ctx.db
       .query('choreParticipants')
       .withIndex('by_instance', (q) => q.eq('choreInstanceId', args.instanceId))
       .collect()
 
     const numParticipants = allParticipants.length
-    const baseReward = instance.totalReward / numParticipants
     const coefficient = QUALITY_COEFFICIENTS[args.quality]
-    const earnedReward = Math.round(baseReward * coefficient)
+
+    let earnedReward: number
+    let effortPercent: number
+
+    if (instance.isJoined) {
+      // Joined chore: reward is pooled and split by effort
+      effortPercent = args.effortPercent ?? (100 / numParticipants)
+      const baseReward = instance.totalReward * (effortPercent / 100)
+      earnedReward = Math.round(baseReward * coefficient)
+    } else {
+      // Non-joined multi-kid chore: each kid gets full reward
+      effortPercent = 100
+      earnedReward = Math.round(instance.totalReward * coefficient)
+    }
 
     // Update participant with quality and reward
     await ctx.db.patch(participant._id, {
       quality: args.quality,
-      effortPercent: 100 / numParticipants,
+      effortPercent,
       earnedReward,
     })
 
@@ -529,6 +583,91 @@ export const rateParticipant = mutation({
     }
 
     return { success: true, allRated, earnedReward }
+  },
+})
+
+// Rate all participants at once with individual qualities (and effort percentages for joined chores)
+export const rateAllParticipants = mutation({
+  args: {
+    instanceId: v.id('choreInstances'),
+    ratings: v.array(
+      v.object({
+        childId: v.id('children'),
+        quality: v.union(v.literal('failed'), v.literal('bad'), v.literal('good'), v.literal('excellent')),
+        effortPercent: v.optional(v.number()), // Only required for joined chores
+      })
+    ),
+    notes: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const instance = await ctx.db.get(args.instanceId)
+    if (!instance) {
+      throw new Error('Chore instance not found')
+    }
+
+    if (instance.status !== 'pending') {
+      throw new Error('Chore is not pending')
+    }
+
+    // For joined chores, validate effort totals 100%
+    if (instance.isJoined) {
+      const totalEffort = args.ratings.reduce((sum, r) => sum + (r.effortPercent ?? 0), 0)
+      if (Math.abs(totalEffort - 100) > 0.01) {
+        throw new Error('Effort percentages must total 100%')
+      }
+    }
+
+    // Process each rating
+    for (const rating of args.ratings) {
+      const participant = await ctx.db
+        .query('choreParticipants')
+        .withIndex('by_instance', (q) => q.eq('choreInstanceId', args.instanceId))
+        .filter((q) => q.eq(q.field('childId'), rating.childId))
+        .first()
+
+      if (!participant) {
+        throw new Error(`Participant ${rating.childId} not found`)
+      }
+
+      const coefficient = QUALITY_COEFFICIENTS[rating.quality]
+      let earnedReward: number
+      let effortPercent: number
+
+      if (instance.isJoined) {
+        // Joined chore: reward is pooled and split by effort
+        effortPercent = rating.effortPercent ?? (100 / args.ratings.length)
+        const baseReward = instance.totalReward * (effortPercent / 100)
+        earnedReward = Math.round(baseReward * coefficient)
+      } else {
+        // Non-joined multi-kid chore: each kid gets full reward
+        effortPercent = 100
+        earnedReward = Math.round(instance.totalReward * coefficient)
+      }
+
+      // Update participant
+      await ctx.db.patch(participant._id, {
+        quality: rating.quality,
+        effortPercent,
+        earnedReward,
+      })
+
+      // Update child balance
+      const child = await ctx.db.get(rating.childId)
+      if (child) {
+        await ctx.db.patch(rating.childId, {
+          balance: child.balance + earnedReward,
+        })
+      }
+    }
+
+    // Mark instance as completed
+    await ctx.db.patch(args.instanceId, {
+      status: 'completed',
+      completedAt: Date.now(),
+      notes: args.notes,
+    })
+
+    return { success: true }
   },
 })
 

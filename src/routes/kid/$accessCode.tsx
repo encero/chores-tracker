@@ -204,7 +204,7 @@ function KidDashboardContent({
                           <TTSButton text={chore.template?.name ?? 'Chore'} language={ttsLanguage} />
                         </div>
 
-                        {chore.isJoined && teammates && teammates.length > 0 && (
+                        {teammates && teammates.length > 0 && (
                           <div className="mt-1 flex items-center gap-1 text-sm text-muted-foreground">
                             <Users className="h-4 w-4" />
                             <span>With </span>

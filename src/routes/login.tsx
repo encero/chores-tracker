@@ -9,7 +9,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { formatCurrency } from '@/lib/currency'
-import { Check, Clock, Users, Lock } from 'lucide-react'
+import { Check, Clock, Users, Lock, ChevronDown, ChevronUp } from 'lucide-react'
 
 export const Route = createFileRoute('/login')({
   component: LoginPage,
@@ -25,6 +25,7 @@ function LoginPage() {
   const markDone = useMutation(api.choreInstances.markDone)
   const [marking, setMarking] = useState<string | null>(null)
   const [showPinPad, setShowPinPad] = useState(false)
+  const [expandedDone, setExpandedDone] = useState<Set<string>>(new Set())
 
   const currency = settings?.currency ?? '$'
 
@@ -34,13 +35,6 @@ function LoginPage() {
       navigate({ to: '/setup' })
     }
   }, [isLoading, isPinSetUp, navigate])
-
-  // Redirect to dashboard if already authenticated
-  useEffect(() => {
-    if (!isLoading && isAuthenticated) {
-      navigate({ to: '/' })
-    }
-  }, [isLoading, isAuthenticated, navigate])
 
   const handleMarkDone = async (instanceId: string, childId: string) => {
     const key = `${instanceId}-${childId}`
@@ -53,6 +47,18 @@ function LoginPage() {
     } finally {
       setMarking(null)
     }
+  }
+
+  const toggleExpandedDone = (childId: string) => {
+    setExpandedDone((prev) => {
+      const next = new Set(prev)
+      if (next.has(childId)) {
+        next.delete(childId)
+      } else {
+        next.add(childId)
+      }
+      return next
+    })
   }
 
   if (isLoading || settings === undefined) {
@@ -68,10 +74,6 @@ function LoginPage() {
 
   if (!isPinSetUp) {
     return null // Will redirect to setup
-  }
-
-  if (isAuthenticated) {
-    return null // Will redirect to dashboard
   }
 
   const handleLogin = async (pin: string, rememberMe: boolean) => {
@@ -104,7 +106,17 @@ function LoginPage() {
             <span className="text-2xl">🏠</span>
             <span className="font-semibold text-purple-900">Chores</span>
           </div>
-          {showPinPad ? (
+          {isAuthenticated ? (
+            <Link to="/">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-muted-foreground"
+              >
+                Dashboard
+              </Button>
+            </Link>
+          ) : showPinPad ? (
             <Button
               variant="ghost"
               size="sm"
@@ -128,7 +140,7 @@ function LoginPage() {
       </header>
 
       {/* PIN Pad overlay */}
-      {showPinPad && (
+      {showPinPad && !isAuthenticated && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
           <div className="bg-white rounded-2xl p-6 shadow-xl mx-4 max-w-sm w-full">
             <PinPad
@@ -156,6 +168,27 @@ function LoginPage() {
           </h1>
         </div>
 
+        {/* Kid Access Links - Above the chore list */}
+        {children && children.length > 0 && (
+          <div className="mb-6 pb-6 border-b border-purple-200">
+            <p className="text-sm text-muted-foreground mb-3 text-center">
+              Go to your personal dashboard:
+            </p>
+            <div className="flex flex-wrap justify-center gap-3">
+              {children.map((child) => (
+                <Link
+                  key={child._id}
+                  to={`/kid/${child.accessCode}`}
+                  className="inline-flex items-center gap-2 rounded-full bg-white px-5 py-3 text-base font-medium text-purple-900 shadow-sm hover:shadow-md transition-shadow border border-purple-100"
+                >
+                  <span className="text-xl">{child.avatarEmoji}</span>
+                  <span>{child.name}</span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+
         {!children || children.length === 0 ? (
           <Card className="border-dashed bg-white/70">
             <CardContent className="py-8 text-center text-muted-foreground">
@@ -176,11 +209,18 @@ function LoginPage() {
               const childChores = choresByChild.get(child._id)
               if (!childChores || childChores.length === 0) return null
 
-              const pendingCount = childChores.filter(
+              const pendingChores = childChores.filter(
                 (c) =>
                   c?.participants?.find((p) => p.childId === child._id)?.status === 'pending'
-              ).length
-              const doneCount = childChores.length - pendingCount
+              )
+              const doneChores = childChores.filter(
+                (c) =>
+                  c?.participants?.find((p) => p.childId === child._id)?.status === 'done' ||
+                  c?.status === 'completed'
+              )
+              const pendingCount = pendingChores.length
+              const doneCount = doneChores.length
+              const isDoneExpanded = expandedDone.has(child._id)
 
               return (
                 <div key={child._id} className="bg-white/70 rounded-xl p-4 shadow-sm">
@@ -214,35 +254,22 @@ function LoginPage() {
 
                   {/* Child's Chores */}
                   <div className="space-y-2 mt-3">
-                    {childChores.map((chore) => {
+                    {/* Pending chores (always visible) */}
+                    {pendingChores.map((chore) => {
                       if (!chore) return null
-                      const myParticipation = chore.participants?.find(
-                        (p) => p.childId === child._id
-                      )
-                      const isDone = myParticipation?.status === 'done' || chore.status === 'completed'
                       const key = `${chore._id}-${child._id}`
                       const isMarking = marking === key
 
                       return (
                         <div
                           key={`${child._id}-${chore._id}`}
-                          className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${
-                            isDone ? 'bg-green-50 border border-green-200' : 'bg-gray-50 border border-gray-100'
-                          }`}
+                          className="flex items-center gap-3 p-3 rounded-lg transition-colors bg-gray-50 border border-gray-100"
                         >
-                          <div
-                            className={`flex h-10 w-10 items-center justify-center rounded-lg text-xl ${
-                              isDone ? 'bg-green-100' : 'bg-white'
-                            }`}
-                          >
+                          <div className="flex h-10 w-10 items-center justify-center rounded-lg text-xl bg-white">
                             {chore.template?.icon ?? '📋'}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p
-                              className={`font-medium truncate ${
-                                isDone ? 'text-green-800' : ''
-                              }`}
-                            >
+                            <p className="font-medium truncate">
                               {chore.template?.name ?? 'Chore'}
                             </p>
                             {chore.isJoined && (
@@ -266,33 +293,93 @@ function LoginPage() {
                               )}
                             </p>
                           </div>
-                          {isDone ? (
-                            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-green-500 text-white">
-                              <Check className="h-5 w-5" />
-                            </div>
-                          ) : (
-                            <Button
-                              size="sm"
-                              className="h-9 px-3 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600"
-                              disabled={isMarking}
-                              onClick={(e) => {
-                                e.preventDefault()
-                                handleMarkDone(chore._id, child._id)
-                              }}
-                            >
-                              {isMarking ? (
-                                <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                              ) : (
-                                <>
-                                  <Check className="h-4 w-4 mr-1" />
-                                  Done
-                                </>
-                              )}
-                            </Button>
-                          )}
+                          <Button
+                            size="sm"
+                            className="h-9 px-3 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600"
+                            disabled={isMarking}
+                            onClick={(e) => {
+                              e.preventDefault()
+                              handleMarkDone(chore._id, child._id)
+                            }}
+                          >
+                            {isMarking ? (
+                              <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                            ) : (
+                              <>
+                                <Check className="h-4 w-4 mr-1" />
+                                Done
+                              </>
+                            )}
+                          </Button>
                         </div>
                       )
                     })}
+
+                    {/* Done chores (collapsible) */}
+                    {doneCount > 0 && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => toggleExpandedDone(child._id)}
+                          className="w-full flex items-center justify-center gap-2 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                        >
+                          {isDoneExpanded ? (
+                            <>
+                              <ChevronUp className="h-4 w-4" />
+                              Hide {doneCount} completed
+                            </>
+                          ) : (
+                            <>
+                              <ChevronDown className="h-4 w-4" />
+                              Show {doneCount} completed
+                            </>
+                          )}
+                        </button>
+
+                        {isDoneExpanded && doneChores.map((chore) => {
+                          if (!chore) return null
+
+                          return (
+                            <div
+                              key={`${child._id}-${chore._id}`}
+                              className="flex items-center gap-3 p-3 rounded-lg transition-colors bg-green-50 border border-green-200"
+                            >
+                              <div className="flex h-10 w-10 items-center justify-center rounded-lg text-xl bg-green-100">
+                                {chore.template?.icon ?? '📋'}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="font-medium truncate text-green-800">
+                                  {chore.template?.name ?? 'Chore'}
+                                </p>
+                                {chore.isJoined && (
+                                  <p className="text-xs text-muted-foreground flex items-center gap-1">
+                                    <Users className="h-3 w-3" />
+                                    With{' '}
+                                    {chore.participants
+                                      ?.filter((p) => p.childId !== child._id)
+                                      .map((p) => p.child?.name)
+                                      .join(', ')}
+                                  </p>
+                                )}
+                              </div>
+                              <div className="text-right">
+                                <p className="text-sm font-semibold text-green-600">
+                                  {formatCurrency(
+                                    chore.isJoined
+                                      ? Math.round(chore.totalReward / (chore.participants?.length ?? 1))
+                                      : chore.totalReward,
+                                    currency
+                                  )}
+                                </p>
+                              </div>
+                              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-green-500 text-white">
+                                <Check className="h-5 w-5" />
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </>
+                    )}
                   </div>
                 </div>
               )
@@ -300,26 +387,6 @@ function LoginPage() {
           </div>
         )}
 
-        {/* Kid Access Links */}
-        {children && children.length > 0 && (
-          <div className="mt-8 pt-6 border-t border-purple-200">
-            <p className="text-sm text-muted-foreground mb-3 text-center">
-              Go to your personal dashboard:
-            </p>
-            <div className="flex flex-wrap justify-center gap-3">
-              {children.map((child) => (
-                <Link
-                  key={child._id}
-                  to={`/kid/${child.accessCode}`}
-                  className="inline-flex items-center gap-2 rounded-full bg-white px-5 py-3 text-base font-medium text-purple-900 shadow-sm hover:shadow-md transition-shadow border border-purple-100"
-                >
-                  <span className="text-xl">{child.avatarEmoji}</span>
-                  <span>{child.name}</span>
-                </Link>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
     </div>
   )
