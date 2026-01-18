@@ -398,12 +398,9 @@ export const listAvailableOptional = query({
 
     const available = await Promise.all(
       schedules.map(async (schedule) => {
-        // Check if schedule is valid for today
+        // Check if schedule is valid for today (optional chores are available every day within date range)
         if (schedule.startDate > today) return null
         if (schedule.endDate && schedule.endDate < today) return null
-
-        // Check if this should be available today based on schedule type
-        if (!shouldCreateInstance(schedule, today)) return null
 
         // Check how many times this child has picked up this chore in the current period
         const periodStart = getPeriodStart(schedule.scheduleType)
@@ -478,17 +475,12 @@ export const pickup = mutation({
       throw new Error('This chore schedule is not active')
     }
 
-    // Check if schedule is valid for today
+    // Check if schedule is valid for today (optional chores are available every day within date range)
     if (schedule.startDate > today) {
       throw new Error('This chore is not yet available')
     }
     if (schedule.endDate && schedule.endDate < today) {
       throw new Error('This chore is no longer available')
-    }
-
-    // Check if available today based on schedule
-    if (!shouldCreateInstance(schedule, today)) {
-      throw new Error('This chore is not available today')
     }
 
     // Check pickup limit
