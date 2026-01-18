@@ -1,4 +1,6 @@
+import { Link } from '@tanstack/react-router'
 import { formatCurrency } from '@/lib/currency'
+import { Home } from 'lucide-react'
 
 interface KidLayoutProps {
   children: React.ReactNode
@@ -20,6 +22,15 @@ export function KidLayout({
       {/* Kid-friendly Header */}
       <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-sm border-b border-purple-100">
         <div className="container flex h-20 items-center justify-between px-4">
+          {/* Back to Home Button */}
+          <Link
+            to="/login"
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-purple-100 text-purple-600 hover:bg-purple-200 transition-colors"
+            title="Back to Home"
+          >
+            <Home className="h-5 w-5" />
+          </Link>
+
           {/* Avatar and Name */}
           <div className="flex items-center gap-3">
             <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-yellow-200 to-orange-200 text-3xl shadow-md">

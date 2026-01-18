@@ -185,3 +185,38 @@ export const updateBalance = mutation({
     return { newBalance }
   },
 })
+
+// Manual balance adjustment with note (for parent corrections)
+export const adjustBalance = mutation({
+  args: {
+    id: v.id('children'),
+    newBalance: v.number(), // The new absolute balance in cents
+    note: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const child = await ctx.db.get(args.id)
+    if (!child) {
+      throw new Error('Child not found')
+    }
+
+    if (args.newBalance < 0) {
+      throw new Error('Balance cannot be negative')
+    }
+
+    const difference = args.newBalance - child.balance
+
+    // Record the adjustment as a withdrawal (if reducing) or add note
+    if (difference !== 0) {
+      await ctx.db.insert('withdrawals', {
+        childId: args.id,
+        amount: Math.abs(difference),
+        createdAt: Date.now(),
+        note: `${difference > 0 ? 'Balance adjustment (+)' : 'Balance adjustment (-)'}${args.note ? `: ${args.note}` : ''}`,
+      })
+    }
+
+    await ctx.db.patch(args.id, { balance: args.newBalance })
+
+    return { newBalance: args.newBalance, difference }
+  },
+})

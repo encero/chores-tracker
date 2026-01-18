@@ -374,6 +374,7 @@ export const rateJoined = mutation({
       })
     ),
     notes: v.optional(v.string()),
+    forceComplete: v.optional(v.boolean()), // Allow parent to force complete even if not all done
   },
   handler: async (ctx, args) => {
     const instance = await ctx.db.get(args.instanceId)
@@ -387,6 +388,17 @@ export const rateJoined = mutation({
 
     if (instance.status !== 'pending') {
       throw new Error('Chore is not pending')
+    }
+
+    // Check if all participants are done
+    const participants = await ctx.db
+      .query('choreParticipants')
+      .withIndex('by_instance', (q) => q.eq('choreInstanceId', args.instanceId))
+      .collect()
+
+    const allDone = participants.every((p) => p.status === 'done')
+    if (!allDone && !args.forceComplete) {
+      throw new Error('Not all participants have marked this chore as done. Use forceComplete to override.')
     }
 
     // Validate effort totals 100%

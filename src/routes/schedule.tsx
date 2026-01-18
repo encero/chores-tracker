@@ -30,7 +30,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { formatCurrency } from '@/lib/currency'
-import { Calendar, Plus, Trash2, Pause, Play, Users } from 'lucide-react'
+import { Calendar, Plus, Trash2, Pause, Play, Users, Pencil } from 'lucide-react'
 
 export const Route = createFileRoute('/schedule')({
   component: SchedulePage,
@@ -63,10 +63,12 @@ function ScheduleContent() {
   const settings = useQuery(api.settings.get)
 
   const createSchedule = useMutation(api.scheduledChores.create)
+  const updateSchedule = useMutation(api.scheduledChores.update)
   const removeSchedule = useMutation(api.scheduledChores.remove)
   const toggleActive = useMutation(api.scheduledChores.toggleActive)
 
   const [isAddOpen, setIsAddOpen] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
 
   const [selectedChildren, setSelectedChildren] = useState<string[]>([])
@@ -141,6 +143,39 @@ function ScheduleContent() {
     try {
       await removeSchedule({ id: id as Id<'scheduledChores'> })
       setDeletingId(null)
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const handleOpenEdit = (schedule: NonNullable<typeof schedules>[number]) => {
+    setEditingId(schedule._id)
+    setSelectedChildren(schedule.childIds)
+    setSelectedTemplate(schedule.choreTemplateId)
+    setReward((schedule.reward / 100).toFixed(2))
+    setIsJoined(schedule.isJoined)
+    setScheduleType(schedule.scheduleType)
+    setScheduleDays(schedule.scheduleDays ?? [])
+    setStartDate(schedule.startDate)
+    setEndDate(schedule.endDate ?? '')
+  }
+
+  const handleUpdate = async () => {
+    if (!editingId || selectedChildren.length === 0) return
+
+    setIsSubmitting(true)
+    try {
+      await updateSchedule({
+        id: editingId as Id<'scheduledChores'>,
+        childIds: selectedChildren as Id<'children'>[],
+        reward: Math.round(parseFloat(reward || '0') * 100),
+        isJoined: isJoined && selectedChildren.length > 1,
+        scheduleType,
+        scheduleDays: scheduleType === 'custom' ? scheduleDays : undefined,
+        endDate: endDate || undefined,
+      })
+      resetForm()
+      setEditingId(null)
     } finally {
       setIsSubmitting(false)
     }
@@ -423,6 +458,13 @@ function ScheduleContent() {
                   <Button
                     variant="ghost"
                     size="icon"
+                    onClick={() => handleOpenEdit(schedule)}
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
                     onClick={() => handleToggleActive(schedule._id)}
                   >
                     {schedule.isActive ? (
@@ -472,6 +514,171 @@ function ScheduleContent() {
           ))}
         </div>
       )}
+
+      {/* Edit Schedule Dialog */}
+      <Dialog
+        open={!!editingId}
+        onOpenChange={(open) => {
+          if (!open) {
+            resetForm()
+            setEditingId(null)
+          }
+        }}
+      >
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Edit Schedule</DialogTitle>
+            <DialogDescription>
+              Update this scheduled chore
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4 max-h-[60vh] overflow-y-auto">
+            {/* Template (read-only) */}
+            <div className="space-y-2">
+              <Label>Chore</Label>
+              <div className="flex items-center gap-2 rounded-lg border p-3 bg-muted/50">
+                {templates?.find((t) => t._id === selectedTemplate)?.icon ?? '📋'}
+                <span>{templates?.find((t) => t._id === selectedTemplate)?.name ?? 'Unknown'}</span>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Chore type cannot be changed. Delete and recreate if needed.
+              </p>
+            </div>
+
+            {/* Select Children */}
+            <div className="space-y-2">
+              <Label>Assign to</Label>
+              <div className="flex flex-wrap gap-2">
+                {children?.map((child) => (
+                  <button
+                    key={child._id}
+                    type="button"
+                    onClick={() => toggleChild(child._id)}
+                    className={`flex items-center gap-2 rounded-full px-3 py-1.5 text-sm transition-colors ${
+                      selectedChildren.includes(child._id)
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-muted hover:bg-muted/80'
+                    }`}
+                  >
+                    <span>{child.avatarEmoji}</span>
+                    <span>{child.name}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Joined Chore Toggle */}
+            {selectedChildren.length > 1 && (
+              <div className="flex items-center justify-between rounded-lg border p-3">
+                <div className="space-y-0.5">
+                  <Label htmlFor="edit-joined">Joined Chore</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Children work together, reward is split by effort
+                  </p>
+                </div>
+                <Switch
+                  id="edit-joined"
+                  checked={isJoined}
+                  onCheckedChange={setIsJoined}
+                />
+              </div>
+            )}
+
+            {/* Reward */}
+            <div className="space-y-2">
+              <Label htmlFor="edit-reward">
+                {isJoined ? 'Total Reward' : 'Reward'} ({currency})
+              </Label>
+              <Input
+                id="edit-reward"
+                type="number"
+                step="0.01"
+                min="0"
+                value={reward}
+                onChange={(e) => setReward(e.target.value)}
+                placeholder="0.00"
+              />
+            </div>
+
+            {/* Schedule Type */}
+            <div className="space-y-2">
+              <Label>Frequency</Label>
+              <Select
+                value={scheduleType}
+                onValueChange={(v) => setScheduleType(v as typeof scheduleType)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="once">One Time</SelectItem>
+                  <SelectItem value="daily">Daily</SelectItem>
+                  <SelectItem value="weekly">Weekly</SelectItem>
+                  <SelectItem value="custom">Custom Days</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Custom Days */}
+            {scheduleType === 'custom' && (
+              <div className="space-y-2">
+                <Label>Days of Week</Label>
+                <div className="flex gap-1">
+                  {DAYS_OF_WEEK.map((day) => (
+                    <button
+                      key={day.value}
+                      type="button"
+                      onClick={() => toggleDay(day.value)}
+                      className={`flex h-10 w-10 items-center justify-center rounded-lg text-sm font-medium transition-colors ${
+                        scheduleDays.includes(day.value)
+                          ? 'bg-primary text-primary-foreground'
+                          : 'bg-muted hover:bg-muted/80'
+                      }`}
+                    >
+                      {day.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* End Date */}
+            {scheduleType !== 'once' && (
+              <div className="space-y-2">
+                <Label htmlFor="edit-endDate">End Date (optional)</Label>
+                <Input
+                  id="edit-endDate"
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  min={startDate}
+                />
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                resetForm()
+                setEditingId(null)
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleUpdate}
+              disabled={
+                selectedChildren.length === 0 ||
+                (scheduleType === 'custom' && scheduleDays.length === 0) ||
+                isSubmitting
+              }
+            >
+              {isSubmitting ? 'Saving...' : 'Save Changes'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

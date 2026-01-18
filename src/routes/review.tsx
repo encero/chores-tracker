@@ -82,7 +82,7 @@ function ReviewContent() {
     setNotes('')
   }
 
-  const handleRateJoined = async (quality: QualityRating) => {
+  const handleRateJoined = async (quality: QualityRating, forceComplete = false) => {
     if (!selectedChoreData) return
 
     setIsSubmitting(true)
@@ -95,6 +95,7 @@ function ReviewContent() {
           effortPercent,
         })),
         notes: notes.trim() || undefined,
+        forceComplete,
       })
       setSelectedChore(null)
       setEfforts({})
@@ -316,6 +317,27 @@ function ReviewContent() {
                 </div>
               </div>
 
+              {/* Warning if not all done */}
+              {!selectedChoreData.allDone && (
+                <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
+                  <p className="text-sm font-medium text-amber-800">
+                    Not all participants have marked this chore as done:
+                  </p>
+                  <ul className="mt-1 text-sm text-amber-700">
+                    {selectedChoreData.participants
+                      ?.filter((p) => p.status !== 'done')
+                      .map((p) => (
+                        <li key={p.childId}>
+                          {p.child?.avatarEmoji} {p.child?.name} - still pending
+                        </li>
+                      ))}
+                  </ul>
+                  <p className="mt-2 text-xs text-amber-600">
+                    Wait for all children to complete, or use "Force Complete" to finish anyway.
+                  </p>
+                </div>
+              )}
+
               {/* Effort Sliders */}
               <div className="space-y-4">
                 <Label>Effort Distribution</Label>
@@ -392,32 +414,45 @@ function ReviewContent() {
             >
               Cancel
             </Button>
-            <Button
-              variant="outline"
-              className="border-red-200 text-red-600 hover:bg-red-50"
-              onClick={() => handleRateJoined('bad')}
-              disabled={isSubmitting || Math.abs(totalEffort - 100) > 0.1}
-            >
-              <ThumbsDown className="mr-1 h-4 w-4" />
-              Bad
-            </Button>
-            <Button
-              variant="outline"
-              className="border-blue-200 text-blue-600 hover:bg-blue-50"
-              onClick={() => handleRateJoined('good')}
-              disabled={isSubmitting || Math.abs(totalEffort - 100) > 0.1}
-            >
-              <ThumbsUp className="mr-1 h-4 w-4" />
-              Good
-            </Button>
-            <Button
-              className="bg-amber-500 hover:bg-amber-600"
-              onClick={() => handleRateJoined('excellent')}
-              disabled={isSubmitting || Math.abs(totalEffort - 100) > 0.1}
-            >
-              <Star className="mr-1 h-4 w-4" />
-              Excellent
-            </Button>
+            {selectedChoreData?.allDone ? (
+              <>
+                <Button
+                  variant="outline"
+                  className="border-red-200 text-red-600 hover:bg-red-50"
+                  onClick={() => handleRateJoined('bad')}
+                  disabled={isSubmitting || Math.abs(totalEffort - 100) > 0.1}
+                >
+                  <ThumbsDown className="mr-1 h-4 w-4" />
+                  Bad
+                </Button>
+                <Button
+                  variant="outline"
+                  className="border-blue-200 text-blue-600 hover:bg-blue-50"
+                  onClick={() => handleRateJoined('good')}
+                  disabled={isSubmitting || Math.abs(totalEffort - 100) > 0.1}
+                >
+                  <ThumbsUp className="mr-1 h-4 w-4" />
+                  Good
+                </Button>
+                <Button
+                  className="bg-amber-500 hover:bg-amber-600"
+                  onClick={() => handleRateJoined('excellent')}
+                  disabled={isSubmitting || Math.abs(totalEffort - 100) > 0.1}
+                >
+                  <Star className="mr-1 h-4 w-4" />
+                  Excellent
+                </Button>
+              </>
+            ) : (
+              <Button
+                variant="outline"
+                className="border-amber-200 text-amber-600 hover:bg-amber-50"
+                onClick={() => handleRateJoined('good', true)}
+                disabled={isSubmitting || Math.abs(totalEffort - 100) > 0.1}
+              >
+                Force Complete (Good)
+              </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>

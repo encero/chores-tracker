@@ -21,7 +21,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { formatCurrency } from '@/lib/currency'
-import { ArrowLeft, Wallet, RefreshCw, ClipboardCheck, History } from 'lucide-react'
+import { ArrowLeft, Wallet, RefreshCw, ClipboardCheck, History, PenLine } from 'lucide-react'
 
 export const Route = createFileRoute('/children/$childId')({
   component: ChildDetailPage,
@@ -52,11 +52,15 @@ function ChildDetailContent() {
   })
 
   const createWithdrawal = useMutation(api.withdrawals.create)
+  const adjustBalance = useMutation(api.children.adjustBalance)
   const regenerateCode = useMutation(api.children.regenerateAccessCode)
 
   const [isWithdrawOpen, setIsWithdrawOpen] = useState(false)
   const [withdrawAmount, setWithdrawAmount] = useState('')
   const [withdrawNote, setWithdrawNote] = useState('')
+  const [isAdjustOpen, setIsAdjustOpen] = useState(false)
+  const [adjustAmount, setAdjustAmount] = useState('')
+  const [adjustNote, setAdjustNote] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const currency = settings?.currency ?? '$'
@@ -111,6 +115,25 @@ function ChildDetailContent() {
     }
   }
 
+  const handleAdjust = async () => {
+    const newBalance = Math.round(parseFloat(adjustAmount) * 100)
+    if (isNaN(newBalance) || newBalance < 0) return
+
+    setIsSubmitting(true)
+    try {
+      await adjustBalance({
+        id: child._id,
+        newBalance,
+        note: adjustNote.trim() || undefined,
+      })
+      setIsAdjustOpen(false)
+      setAdjustAmount('')
+      setAdjustNote('')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
   const completedChores = chores?.filter((c) => c?.status === 'completed') ?? []
   const pendingChores = chores?.filter((c) => c?.status === 'pending') ?? []
 
@@ -149,17 +172,28 @@ function ChildDetailContent() {
             <p className="text-4xl font-bold text-green-600">
               {formatCurrency(child.balance, currency)}
             </p>
-            <Button
-              className="mt-2"
-              onClick={() => {
-                setWithdrawAmount((child.balance / 100).toFixed(2))
-                setIsWithdrawOpen(true)
-              }}
-              disabled={child.balance === 0}
-            >
-              <Wallet className="mr-2 h-4 w-4" />
-              Withdraw
-            </Button>
+            <div className="mt-2 flex gap-2 justify-end">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setAdjustAmount((child.balance / 100).toFixed(2))
+                  setIsAdjustOpen(true)
+                }}
+              >
+                <PenLine className="mr-2 h-4 w-4" />
+                Adjust
+              </Button>
+              <Button
+                onClick={() => {
+                  setWithdrawAmount((child.balance / 100).toFixed(2))
+                  setIsWithdrawOpen(true)
+                }}
+                disabled={child.balance === 0}
+              >
+                <Wallet className="mr-2 h-4 w-4" />
+                Withdraw
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -366,6 +400,69 @@ function ChildDetailContent() {
               }
             >
               {isSubmitting ? 'Processing...' : 'Withdraw'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Adjust Balance Dialog */}
+      <Dialog open={isAdjustOpen} onOpenChange={setIsAdjustOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Adjust Balance</DialogTitle>
+            <DialogDescription>
+              Manually set {child.name}'s balance (current:{' '}
+              {formatCurrency(child.balance, currency)})
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="adjust-amount">New Balance ({currency})</Label>
+              <Input
+                id="adjust-amount"
+                type="number"
+                step="0.01"
+                min="0"
+                value={adjustAmount}
+                onChange={(e) => setAdjustAmount(e.target.value)}
+                placeholder="0.00"
+              />
+              {adjustAmount && (
+                <p className="text-sm text-muted-foreground">
+                  {(() => {
+                    const newBal = Math.round(parseFloat(adjustAmount) * 100)
+                    const diff = newBal - child.balance
+                    if (diff > 0) return <span className="text-green-600">+{formatCurrency(diff, currency)}</span>
+                    if (diff < 0) return <span className="text-red-600">{formatCurrency(diff, currency)}</span>
+                    return <span>No change</span>
+                  })()}
+                </p>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="adjust-note">Reason (optional)</Label>
+              <Input
+                id="adjust-note"
+                value={adjustNote}
+                onChange={(e) => setAdjustNote(e.target.value)}
+                placeholder="e.g., Correction for missed chore"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsAdjustOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleAdjust}
+              disabled={
+                !adjustAmount ||
+                parseFloat(adjustAmount) < 0 ||
+                isNaN(parseFloat(adjustAmount)) ||
+                isSubmitting
+              }
+            >
+              {isSubmitting ? 'Saving...' : 'Save'}
             </Button>
           </DialogFooter>
         </DialogContent>
