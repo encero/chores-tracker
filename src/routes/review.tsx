@@ -43,11 +43,13 @@ function ReviewContent() {
 
   const rateChore = useMutation(api.choreInstances.rate)
   const rateJoinedChore = useMutation(api.choreInstances.rateJoined)
+  const rateParticipant = useMutation(api.choreInstances.rateParticipant)
 
   const [selectedChore, setSelectedChore] = useState<string | null>(null)
   const [efforts, setEfforts] = useState<Record<string, number>>({})
   const [notes, setNotes] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [ratingChildId, setRatingChildId] = useState<string | null>(null)
 
   const currency = settings?.currency ?? '$'
 
@@ -72,6 +74,23 @@ function ReviewContent() {
       })
     } finally {
       setIsSubmitting(false)
+    }
+  }
+
+  const handleRateParticipant = async (
+    choreId: string,
+    childId: string,
+    quality: QualityRating
+  ) => {
+    setRatingChildId(childId)
+    try {
+      await rateParticipant({
+        instanceId: choreId as Id<'choreInstances'>,
+        childId: childId as Id<'children'>,
+        quality,
+      })
+    } finally {
+      setRatingChildId(null)
     }
   }
 
@@ -231,49 +250,126 @@ function ReviewContent() {
                   </div>
 
                   {/* Rating Buttons */}
-                  <div className="mt-4 flex items-center justify-end gap-2">
-                    {isJoined ? (
+                  {isJoined ? (
+                    <div className="mt-4 space-y-3">
+                      <p className="text-sm font-medium text-muted-foreground">
+                        Rate each participant individually:
+                      </p>
+                      {chore.participants?.map((p) => {
+                        const isRating = ratingChildId === p.childId
+                        const alreadyRated = !!p.quality
+                        const baseReward = chore.totalReward / (chore.participants?.length ?? 1)
+
+                        return (
+                          <div
+                            key={p.childId}
+                            className={`flex items-center gap-3 rounded-lg border p-3 ${
+                              alreadyRated ? 'bg-green-50 border-green-200' : ''
+                            }`}
+                          >
+                            <div className="flex items-center gap-2 flex-1">
+                              <span className="text-xl">{p.child?.avatarEmoji}</span>
+                              <span className="font-medium">{p.child?.name}</span>
+                              {p.status === 'done' && !alreadyRated && (
+                                <Badge variant="reviewing" className="text-xs">Ready</Badge>
+                              )}
+                              {p.status === 'pending' && (
+                                <Badge variant="pending" className="text-xs">Not done</Badge>
+                              )}
+                            </div>
+
+                            {alreadyRated ? (
+                              <div className="flex items-center gap-2">
+                                <Badge variant={p.quality ?? 'default'}>
+                                  {p.quality === 'excellent' && '⭐ '}
+                                  {p.quality}
+                                </Badge>
+                                <span className="text-sm font-medium text-green-600">
+                                  +{formatCurrency(p.earnedReward ?? 0, currency)}
+                                </span>
+                              </div>
+                            ) : p.status === 'done' ? (
+                              <div className="flex gap-1">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="border-red-200 text-red-600 hover:bg-red-50 h-8 px-2"
+                                  onClick={() => handleRateParticipant(chore._id, p.childId, 'bad')}
+                                  disabled={isRating}
+                                >
+                                  {isRating ? (
+                                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                                  ) : (
+                                    <>
+                                      <ThumbsDown className="h-3 w-3" />
+                                      <span className="ml-1 text-xs">{formatCurrency(Math.round(baseReward * 0.5), currency)}</span>
+                                    </>
+                                  )}
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="border-blue-200 text-blue-600 hover:bg-blue-50 h-8 px-2"
+                                  onClick={() => handleRateParticipant(chore._id, p.childId, 'good')}
+                                  disabled={isRating}
+                                >
+                                  <ThumbsUp className="h-3 w-3" />
+                                  <span className="ml-1 text-xs">{formatCurrency(Math.round(baseReward), currency)}</span>
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="border-amber-200 text-amber-600 hover:bg-amber-50 h-8 px-2"
+                                  onClick={() => handleRateParticipant(chore._id, p.childId, 'excellent')}
+                                  disabled={isRating}
+                                >
+                                  <Star className="h-3 w-3" />
+                                  <span className="ml-1 text-xs">{formatCurrency(Math.round(baseReward * 1.25), currency)}</span>
+                                </Button>
+                              </div>
+                            ) : (
+                              <span className="text-sm text-muted-foreground">
+                                Waiting to complete
+                              </span>
+                            )}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  ) : (
+                    <div className="mt-4 flex items-center justify-end gap-2">
                       <Button
-                        onClick={() => handleOpenJoinedReview(chore)}
+                        variant="outline"
+                        size="sm"
+                        className="border-red-200 text-red-600 hover:bg-red-50"
+                        onClick={() => handleQuickRate(chore._id, 'bad')}
                         disabled={isSubmitting}
                       >
-                        Review & Rate
+                        <ThumbsDown className="mr-1 h-4 w-4" />
+                        Bad (50%)
                       </Button>
-                    ) : (
-                      <>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="border-red-200 text-red-600 hover:bg-red-50"
-                          onClick={() => handleQuickRate(chore._id, 'bad')}
-                          disabled={isSubmitting}
-                        >
-                          <ThumbsDown className="mr-1 h-4 w-4" />
-                          Bad (50%)
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="border-blue-200 text-blue-600 hover:bg-blue-50"
-                          onClick={() => handleQuickRate(chore._id, 'good')}
-                          disabled={isSubmitting}
-                        >
-                          <ThumbsUp className="mr-1 h-4 w-4" />
-                          Good (100%)
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="border-amber-200 text-amber-600 hover:bg-amber-50"
-                          onClick={() => handleQuickRate(chore._id, 'excellent')}
-                          disabled={isSubmitting}
-                        >
-                          <Star className="mr-1 h-4 w-4" />
-                          Excellent (125%)
-                        </Button>
-                      </>
-                    )}
-                  </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="border-blue-200 text-blue-600 hover:bg-blue-50"
+                        onClick={() => handleQuickRate(chore._id, 'good')}
+                        disabled={isSubmitting}
+                      >
+                        <ThumbsUp className="mr-1 h-4 w-4" />
+                        Good (100%)
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="border-amber-200 text-amber-600 hover:bg-amber-50"
+                        onClick={() => handleQuickRate(chore._id, 'excellent')}
+                        disabled={isSubmitting}
+                      >
+                        <Star className="mr-1 h-4 w-4" />
+                        Excellent (125%)
+                      </Button>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             )

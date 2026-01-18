@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { EmptyState } from '@/components/ui/empty-state'
 import { formatCurrency } from '@/lib/currency'
-import { Check, Clock, Users, Star, PartyPopper } from 'lucide-react'
+import { Check, Clock, Users, Star, PartyPopper, HandCoins, Sparkles } from 'lucide-react'
 import { useState } from 'react'
 
 export const Route = createFileRoute('/kid/$accessCode')({
@@ -80,10 +80,14 @@ function KidDashboardContent({
     startDate: today,
     endDate: nextWeekStr,
   })
+  const availableOptional = useQuery(api.scheduledChores.listAvailableOptional, { childId })
 
   const markDone = useMutation(api.choreInstances.markDone)
+  const pickupChore = useMutation(api.scheduledChores.pickup)
   const [marking, setMarking] = useState<string | null>(null)
   const [justCompleted, setJustCompleted] = useState<string | null>(null)
+  const [pickingUp, setPickingUp] = useState<string | null>(null)
+  const [justPickedUp, setJustPickedUp] = useState<string | null>(null)
 
   const handleMarkDone = async (instanceId: string) => {
     setMarking(instanceId)
@@ -96,6 +100,20 @@ function KidDashboardContent({
       setTimeout(() => setJustCompleted(null), 2000)
     } finally {
       setMarking(null)
+    }
+  }
+
+  const handlePickup = async (scheduledChoreId: string) => {
+    setPickingUp(scheduledChoreId)
+    try {
+      await pickupChore({
+        scheduledChoreId: scheduledChoreId as Id<'scheduledChores'>,
+        childId,
+      })
+      setJustPickedUp(scheduledChoreId)
+      setTimeout(() => setJustPickedUp(null), 2000)
+    } finally {
+      setPickingUp(null)
     }
   }
 
@@ -289,6 +307,87 @@ function KidDashboardContent({
           </div>
         )}
       </section>
+
+      {/* Available Optional Chores */}
+      {availableOptional && availableOptional.length > 0 && (
+        <section>
+          <h2 className="mb-4 flex items-center gap-2 text-xl font-bold text-purple-900">
+            <Sparkles className="h-5 w-5" />
+            Extra Chores Available
+          </h2>
+
+          <div className="space-y-3">
+            {availableOptional.map((chore) => {
+              if (!chore) return null
+
+              return (
+                <Card
+                  key={chore._id}
+                  className={`border-2 transition-all ${
+                    justPickedUp === chore._id
+                      ? 'border-green-400 bg-green-50'
+                      : 'border-amber-200 bg-amber-50/50'
+                  }`}
+                >
+                  <CardContent className="py-4">
+                    <div className="flex items-center gap-4">
+                      <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-amber-100 to-orange-100 text-3xl shadow-sm">
+                        {chore.template?.icon ?? '📋'}
+                      </div>
+
+                      <div className="flex-1">
+                        <h3 className="text-lg font-bold text-amber-900">
+                          {chore.template?.name ?? 'Chore'}
+                        </h3>
+
+                        <div className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
+                          <Badge variant="outline" className="text-xs">
+                            {chore.scheduleType === 'daily' && 'Daily'}
+                            {chore.scheduleType === 'weekly' && 'Weekly'}
+                            {chore.scheduleType === 'once' && 'One-time'}
+                            {chore.scheduleType === 'custom' && 'Custom'}
+                          </Badge>
+                          {chore.maxPickups !== undefined && (
+                            <span className="text-xs">
+                              {chore.pickupCount}/{chore.maxPickups} done
+                            </span>
+                          )}
+                        </div>
+
+                        <p className="mt-1 text-lg font-semibold text-green-600">
+                          {formatCurrency(chore.reward, currency)}
+                        </p>
+                      </div>
+
+                      <Button
+                        size="lg"
+                        className={`h-14 px-4 rounded-xl shadow-lg ${
+                          justPickedUp === chore._id
+                            ? 'bg-green-500'
+                            : 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600'
+                        }`}
+                        onClick={() => handlePickup(chore._id)}
+                        disabled={pickingUp === chore._id || justPickedUp === chore._id}
+                      >
+                        {pickingUp === chore._id ? (
+                          <div className="h-6 w-6 animate-spin rounded-full border-3 border-white border-t-transparent" />
+                        ) : justPickedUp === chore._id ? (
+                          <Check className="h-6 w-6" />
+                        ) : (
+                          <>
+                            <HandCoins className="h-5 w-5 mr-2" />
+                            Pick Up
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )
+            })}
+          </div>
+        </section>
+      )}
 
       {/* Recent Activity */}
       {recentCompleted.length > 0 && (

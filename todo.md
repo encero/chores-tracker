@@ -1,5 +1,2 @@
-- [x] there is no way to return from kids page back to login
-- [x] i want a way to create adhoc chores, from templates, it will be scheduled immediately and wont repeat
-- [x] marking joined chore for one kid closed it entirely, it show as pending on the other child but it cant be completed or changed
-- [x] there is no way to change the schedule only pause it and delete it
-- [x] i want to manually change the balance of a kid if corrections needs to be made
+- [ ] i want ot upload kids images to the app, use https://www.convex.dev/components/cloudflare-r2 as storage with public domain for the bucket. 
+- [ ] for kids that cant read yet i want support for tts on the names of the chores so they can indepedently know what they are supposed to do

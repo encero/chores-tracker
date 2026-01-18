@@ -33,10 +33,12 @@ export default defineSchema({
 
   // Scheduled chores (recurring or one-time assignments)
   scheduledChores: defineTable({
-    childIds: v.array(v.id('children')), // References to children (single or multiple for joined)
+    childIds: v.array(v.id('children')), // References to children (single or multiple for joined, empty for optional)
     choreTemplateId: v.id('choreTemplates'), // Reference to chore template
     reward: v.number(), // Total reward for this chore (cents, can override template)
     isJoined: v.boolean(), // True if this is a joined chore (reward split by effort)
+    isOptional: v.optional(v.boolean()), // True if kids can pick up this chore themselves
+    maxPickupsPerPeriod: v.optional(v.number()), // Max times each child can pick up per period (null = unlimited)
     scheduleType: v.union(
       v.literal('once'),
       v.literal('daily'),
@@ -50,7 +52,8 @@ export default defineSchema({
   })
     .index('by_child', ['childIds'])
     .index('by_template', ['choreTemplateId'])
-    .index('by_active', ['isActive']),
+    .index('by_active', ['isActive'])
+    .index('by_optional', ['isOptional', 'isActive']),
 
   // Chore instances (actual chores to be completed on a specific day)
   choreInstances: defineTable({
@@ -82,6 +85,9 @@ export default defineSchema({
     completedAt: v.optional(v.number()), // When this child marked done
     effortPercent: v.optional(v.number()), // Effort contribution 0-100 (for joined chores)
     earnedReward: v.optional(v.number()), // Actual reward earned (calculated after review)
+    quality: v.optional(
+      v.union(v.literal('bad'), v.literal('good'), v.literal('excellent'))
+    ), // Individual quality rating (for joined chores)
   })
     .index('by_instance', ['choreInstanceId'])
     .index('by_child', ['childId'])

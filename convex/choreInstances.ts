@@ -450,6 +450,88 @@ export const rateJoined = mutation({
   },
 })
 
+// Rate a single participant in a joined chore individually
+export const rateParticipant = mutation({
+  args: {
+    instanceId: v.id('choreInstances'),
+    childId: v.id('children'),
+    quality: v.union(v.literal('bad'), v.literal('good'), v.literal('excellent')),
+  },
+  handler: async (ctx, args) => {
+    const instance = await ctx.db.get(args.instanceId)
+    if (!instance) {
+      throw new Error('Chore instance not found')
+    }
+
+    if (!instance.isJoined) {
+      throw new Error('Use rate() for individual chores')
+    }
+
+    if (instance.status !== 'pending') {
+      throw new Error('Chore is not pending')
+    }
+
+    // Find the participant
+    const participant = await ctx.db
+      .query('choreParticipants')
+      .withIndex('by_instance', (q) => q.eq('choreInstanceId', args.instanceId))
+      .filter((q) => q.eq(q.field('childId'), args.childId))
+      .first()
+
+    if (!participant) {
+      throw new Error('Participant not found')
+    }
+
+    if (participant.quality) {
+      throw new Error('Participant already rated')
+    }
+
+    // Get all participants to calculate equal share
+    const allParticipants = await ctx.db
+      .query('choreParticipants')
+      .withIndex('by_instance', (q) => q.eq('choreInstanceId', args.instanceId))
+      .collect()
+
+    const numParticipants = allParticipants.length
+    const baseReward = instance.totalReward / numParticipants
+    const coefficient = QUALITY_COEFFICIENTS[args.quality]
+    const earnedReward = Math.round(baseReward * coefficient)
+
+    // Update participant with quality and reward
+    await ctx.db.patch(participant._id, {
+      quality: args.quality,
+      effortPercent: 100 / numParticipants,
+      earnedReward,
+    })
+
+    // Update child balance
+    const child = await ctx.db.get(args.childId)
+    if (child) {
+      await ctx.db.patch(args.childId, {
+        balance: child.balance + earnedReward,
+      })
+    }
+
+    // Check if all participants have been rated
+    const updatedParticipants = await ctx.db
+      .query('choreParticipants')
+      .withIndex('by_instance', (q) => q.eq('choreInstanceId', args.instanceId))
+      .collect()
+
+    const allRated = updatedParticipants.every((p) => p.quality)
+
+    if (allRated) {
+      // Mark the instance as completed
+      await ctx.db.patch(args.instanceId, {
+        status: 'completed',
+        completedAt: Date.now(),
+      })
+    }
+
+    return { success: true, allRated, earnedReward }
+  },
+})
+
 // Mark chore as missed
 export const markMissed = mutation({
   args: {

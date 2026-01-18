@@ -111,6 +111,8 @@ export const create = mutation({
     choreTemplateId: v.id('choreTemplates'),
     reward: v.number(),
     isJoined: v.boolean(),
+    isOptional: v.optional(v.boolean()),
+    maxPickupsPerPeriod: v.optional(v.number()),
     scheduleType: v.union(
       v.literal('once'),
       v.literal('daily'),
@@ -141,11 +143,16 @@ export const create = mutation({
       throw new Error('Joined chores require at least 2 children')
     }
 
+    // Optional chores should have empty childIds (any child can pick up)
+    const childIdsToSave = args.isOptional ? [] : args.childIds
+
     const scheduleId = await ctx.db.insert('scheduledChores', {
-      childIds: args.childIds,
+      childIds: childIdsToSave,
       choreTemplateId: args.choreTemplateId,
       reward: args.reward,
       isJoined: args.isJoined,
+      isOptional: args.isOptional,
+      maxPickupsPerPeriod: args.maxPickupsPerPeriod,
       scheduleType: args.scheduleType,
       scheduleDays: args.scheduleDays,
       startDate: args.startDate,
@@ -154,39 +161,42 @@ export const create = mutation({
     })
 
     // Check if we should create an instance for today
-    const today = getToday()
-    const scheduleData = {
-      scheduleType: args.scheduleType,
-      scheduleDays: args.scheduleDays,
-      startDate: args.startDate,
-      endDate: args.endDate,
-    }
+    // Skip for optional chores - kids pick those up themselves
+    if (!args.isOptional) {
+      const today = getToday()
+      const scheduleData = {
+        scheduleType: args.scheduleType,
+        scheduleDays: args.scheduleDays,
+        startDate: args.startDate,
+        endDate: args.endDate,
+      }
 
-    if (shouldCreateInstance(scheduleData, today)) {
-      // Check if instance already exists for today (shouldn't happen for new schedule, but be safe)
-      const existing = await ctx.db
-        .query('choreInstances')
-        .withIndex('by_scheduled_chore', (q) => q.eq('scheduledChoreId', scheduleId))
-        .filter((q) => q.eq(q.field('dueDate'), today))
-        .first()
+      if (shouldCreateInstance(scheduleData, today)) {
+        // Check if instance already exists for today (shouldn't happen for new schedule, but be safe)
+        const existing = await ctx.db
+          .query('choreInstances')
+          .withIndex('by_scheduled_chore', (q) => q.eq('scheduledChoreId', scheduleId))
+          .filter((q) => q.eq(q.field('dueDate'), today))
+          .first()
 
-      if (!existing) {
-        // Create instance for today
-        const instanceId = await ctx.db.insert('choreInstances', {
-          scheduledChoreId: scheduleId,
-          dueDate: today,
-          isJoined: args.isJoined,
-          status: 'pending',
-          totalReward: args.reward,
-        })
-
-        // Create participant records
-        for (const childId of args.childIds) {
-          await ctx.db.insert('choreParticipants', {
-            choreInstanceId: instanceId,
-            childId,
+        if (!existing) {
+          // Create instance for today
+          const instanceId = await ctx.db.insert('choreInstances', {
+            scheduledChoreId: scheduleId,
+            dueDate: today,
+            isJoined: args.isJoined,
             status: 'pending',
+            totalReward: args.reward,
           })
+
+          // Create participant records
+          for (const childId of childIdsToSave) {
+            await ctx.db.insert('choreParticipants', {
+              choreInstanceId: instanceId,
+              childId,
+              status: 'pending',
+            })
+          }
         }
       }
     }
@@ -202,6 +212,8 @@ export const update = mutation({
     childIds: v.optional(v.array(v.id('children'))),
     reward: v.optional(v.number()),
     isJoined: v.optional(v.boolean()),
+    isOptional: v.optional(v.boolean()),
+    maxPickupsPerPeriod: v.optional(v.number()),
     scheduleType: v.optional(
       v.union(
         v.literal('once'),
@@ -234,6 +246,8 @@ export const update = mutation({
     if (args.childIds !== undefined) updates.childIds = args.childIds
     if (args.reward !== undefined) updates.reward = args.reward
     if (args.isJoined !== undefined) updates.isJoined = args.isJoined
+    if (args.isOptional !== undefined) updates.isOptional = args.isOptional
+    if (args.maxPickupsPerPeriod !== undefined) updates.maxPickupsPerPeriod = args.maxPickupsPerPeriod
     if (args.scheduleType !== undefined) updates.scheduleType = args.scheduleType
     if (args.scheduleDays !== undefined) updates.scheduleDays = args.scheduleDays
     if (args.endDate !== undefined) updates.endDate = args.endDate
@@ -346,5 +360,180 @@ export const generateTodayInstances = mutation({
     }
 
     return { created }
+  },
+})
+
+// Helper to get start of period based on schedule type
+function getPeriodStart(scheduleType: 'once' | 'daily' | 'weekly' | 'custom'): string {
+  const now = new Date()
+  switch (scheduleType) {
+    case 'daily':
+    case 'once':
+    case 'custom':
+      return now.toISOString().split('T')[0]
+    case 'weekly':
+      // Get start of current week (Sunday)
+      const day = now.getDay()
+      const diff = now.getDate() - day
+      const weekStart = new Date(now.setDate(diff))
+      return weekStart.toISOString().split('T')[0]
+    default:
+      return now.toISOString().split('T')[0]
+  }
+}
+
+// List available optional chores a child can pick up
+export const listAvailableOptional = query({
+  args: {
+    childId: v.id('children'),
+  },
+  handler: async (ctx, args) => {
+    const today = getToday()
+
+    // Get all active optional schedules
+    const schedules = await ctx.db
+      .query('scheduledChores')
+      .withIndex('by_optional', (q) => q.eq('isOptional', true).eq('isActive', true))
+      .collect()
+
+    const available = await Promise.all(
+      schedules.map(async (schedule) => {
+        // Check if schedule is valid for today
+        if (schedule.startDate > today) return null
+        if (schedule.endDate && schedule.endDate < today) return null
+
+        // Check if this should be available today based on schedule type
+        if (!shouldCreateInstance(schedule, today)) return null
+
+        // Check how many times this child has picked up this chore in the current period
+        const periodStart = getPeriodStart(schedule.scheduleType)
+
+        // Get all instances of this schedule in current period where this child participated
+        const instances = await ctx.db
+          .query('choreInstances')
+          .withIndex('by_scheduled_chore', (q) => q.eq('scheduledChoreId', schedule._id))
+          .filter((q) => q.gte(q.field('dueDate'), periodStart))
+          .collect()
+
+        // Count how many this child has picked up
+        let pickupCount = 0
+        for (const instance of instances) {
+          const participation = await ctx.db
+            .query('choreParticipants')
+            .withIndex('by_instance', (q) => q.eq('choreInstanceId', instance._id))
+            .filter((q) => q.eq(q.field('childId'), args.childId))
+            .first()
+          if (participation) {
+            pickupCount++
+          }
+        }
+
+        // Check against limit
+        if (schedule.maxPickupsPerPeriod !== undefined && pickupCount >= schedule.maxPickupsPerPeriod) {
+          return null
+        }
+
+        // Get template
+        const template = await ctx.db.get(schedule.choreTemplateId)
+
+        return {
+          ...schedule,
+          template,
+          pickupCount,
+          maxPickups: schedule.maxPickupsPerPeriod,
+        }
+      })
+    )
+
+    return available.filter(Boolean)
+  },
+})
+
+// Allow a child to pick up an optional chore
+export const pickup = mutation({
+  args: {
+    scheduledChoreId: v.id('scheduledChores'),
+    childId: v.id('children'),
+  },
+  handler: async (ctx, args) => {
+    const today = getToday()
+
+    // Validate child exists
+    const child = await ctx.db.get(args.childId)
+    if (!child) {
+      throw new Error('Child not found')
+    }
+
+    // Get the schedule
+    const schedule = await ctx.db.get(args.scheduledChoreId)
+    if (!schedule) {
+      throw new Error('Scheduled chore not found')
+    }
+
+    if (!schedule.isOptional) {
+      throw new Error('This chore is not optional')
+    }
+
+    if (!schedule.isActive) {
+      throw new Error('This chore schedule is not active')
+    }
+
+    // Check if schedule is valid for today
+    if (schedule.startDate > today) {
+      throw new Error('This chore is not yet available')
+    }
+    if (schedule.endDate && schedule.endDate < today) {
+      throw new Error('This chore is no longer available')
+    }
+
+    // Check if available today based on schedule
+    if (!shouldCreateInstance(schedule, today)) {
+      throw new Error('This chore is not available today')
+    }
+
+    // Check pickup limit
+    if (schedule.maxPickupsPerPeriod !== undefined) {
+      const periodStart = getPeriodStart(schedule.scheduleType)
+
+      const instances = await ctx.db
+        .query('choreInstances')
+        .withIndex('by_scheduled_chore', (q) => q.eq('scheduledChoreId', args.scheduledChoreId))
+        .filter((q) => q.gte(q.field('dueDate'), periodStart))
+        .collect()
+
+      let pickupCount = 0
+      for (const instance of instances) {
+        const participation = await ctx.db
+          .query('choreParticipants')
+          .withIndex('by_instance', (q) => q.eq('choreInstanceId', instance._id))
+          .filter((q) => q.eq(q.field('childId'), args.childId))
+          .first()
+        if (participation) {
+          pickupCount++
+        }
+      }
+
+      if (pickupCount >= schedule.maxPickupsPerPeriod) {
+        throw new Error(`You've already picked up this chore ${schedule.maxPickupsPerPeriod} time(s) this period`)
+      }
+    }
+
+    // Create instance for this pickup
+    const instanceId = await ctx.db.insert('choreInstances', {
+      scheduledChoreId: args.scheduledChoreId,
+      dueDate: today,
+      isJoined: false, // Optional chores are individual
+      status: 'pending',
+      totalReward: schedule.reward,
+    })
+
+    // Create participant record for this child
+    await ctx.db.insert('choreParticipants', {
+      choreInstanceId: instanceId,
+      childId: args.childId,
+      status: 'pending',
+    })
+
+    return { id: instanceId }
   },
 })

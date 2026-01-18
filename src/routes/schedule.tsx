@@ -30,7 +30,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { formatCurrency } from '@/lib/currency'
-import { Calendar, Plus, Trash2, Pause, Play, Users, Pencil } from 'lucide-react'
+import { Calendar, Plus, Trash2, Pause, Play, Users, Pencil, Sparkles } from 'lucide-react'
 
 export const Route = createFileRoute('/schedule')({
   component: SchedulePage,
@@ -75,6 +75,8 @@ function ScheduleContent() {
   const [selectedTemplate, setSelectedTemplate] = useState<string>('')
   const [reward, setReward] = useState('')
   const [isJoined, setIsJoined] = useState(false)
+  const [isOptional, setIsOptional] = useState(false)
+  const [maxPickupsPerPeriod, setMaxPickupsPerPeriod] = useState('')
   const [scheduleType, setScheduleType] = useState<'once' | 'daily' | 'weekly' | 'custom'>('daily')
   const [scheduleDays, setScheduleDays] = useState<number[]>([])
   const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0])
@@ -88,6 +90,8 @@ function ScheduleContent() {
     setSelectedTemplate('')
     setReward('')
     setIsJoined(false)
+    setIsOptional(false)
+    setMaxPickupsPerPeriod('')
     setScheduleType('daily')
     setScheduleDays([])
     setStartDate(new Date().toISOString().split('T')[0])
@@ -117,15 +121,17 @@ function ScheduleContent() {
   }
 
   const handleAdd = async () => {
-    if (!selectedTemplate || selectedChildren.length === 0) return
+    if (!selectedTemplate || (!isOptional && selectedChildren.length === 0)) return
 
     setIsSubmitting(true)
     try {
       await createSchedule({
-        childIds: selectedChildren as Id<'children'>[],
+        childIds: isOptional ? [] : selectedChildren as Id<'children'>[],
         choreTemplateId: selectedTemplate as Id<'choreTemplates'>,
         reward: Math.round(parseFloat(reward || '0') * 100),
-        isJoined: isJoined && selectedChildren.length > 1,
+        isJoined: !isOptional && isJoined && selectedChildren.length > 1,
+        isOptional,
+        maxPickupsPerPeriod: isOptional && maxPickupsPerPeriod ? parseInt(maxPickupsPerPeriod) : undefined,
         scheduleType,
         scheduleDays: scheduleType === 'custom' ? scheduleDays : undefined,
         startDate,
@@ -154,6 +160,8 @@ function ScheduleContent() {
     setSelectedTemplate(schedule.choreTemplateId)
     setReward((schedule.reward / 100).toFixed(2))
     setIsJoined(schedule.isJoined)
+    setIsOptional(schedule.isOptional ?? false)
+    setMaxPickupsPerPeriod(schedule.maxPickupsPerPeriod?.toString() ?? '')
     setScheduleType(schedule.scheduleType)
     setScheduleDays(schedule.scheduleDays ?? [])
     setStartDate(schedule.startDate)
@@ -161,15 +169,17 @@ function ScheduleContent() {
   }
 
   const handleUpdate = async () => {
-    if (!editingId || selectedChildren.length === 0) return
+    if (!editingId || (!isOptional && selectedChildren.length === 0)) return
 
     setIsSubmitting(true)
     try {
       await updateSchedule({
         id: editingId as Id<'scheduledChores'>,
-        childIds: selectedChildren as Id<'children'>[],
+        childIds: isOptional ? [] : selectedChildren as Id<'children'>[],
         reward: Math.round(parseFloat(reward || '0') * 100),
-        isJoined: isJoined && selectedChildren.length > 1,
+        isJoined: !isOptional && isJoined && selectedChildren.length > 1,
+        isOptional,
+        maxPickupsPerPeriod: isOptional && maxPickupsPerPeriod ? parseInt(maxPickupsPerPeriod) : undefined,
         scheduleType,
         scheduleDays: scheduleType === 'custom' ? scheduleDays : undefined,
         endDate: endDate || undefined,
@@ -221,30 +231,74 @@ function ScheduleContent() {
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4 max-h-[60vh] overflow-y-auto">
-              {/* Select Children */}
-              <div className="space-y-2">
-                <Label>Assign to</Label>
-                <div className="flex flex-wrap gap-2">
-                  {children.map((child) => (
-                    <button
-                      key={child._id}
-                      type="button"
-                      onClick={() => toggleChild(child._id)}
-                      className={`flex items-center gap-2 rounded-full px-3 py-1.5 text-sm transition-colors ${
-                        selectedChildren.includes(child._id)
-                          ? 'bg-primary text-primary-foreground'
-                          : 'bg-muted hover:bg-muted/80'
-                      }`}
-                    >
-                      <span>{child.avatarEmoji}</span>
-                      <span>{child.name}</span>
-                    </button>
-                  ))}
+              {/* Optional Chore Toggle */}
+              <div className="flex items-center justify-between rounded-lg border p-3 bg-amber-50/50">
+                <div className="space-y-0.5">
+                  <Label htmlFor="optional" className="flex items-center gap-2">
+                    <Sparkles className="h-4 w-4 text-amber-500" />
+                    Optional Chore
+                  </Label>
+                  <p className="text-sm text-muted-foreground">
+                    Any child can pick up this chore for extra earnings
+                  </p>
                 </div>
+                <Switch
+                  id="optional"
+                  checked={isOptional}
+                  onCheckedChange={(checked) => {
+                    setIsOptional(checked)
+                    if (checked) {
+                      setIsJoined(false)
+                      setSelectedChildren([])
+                    }
+                  }}
+                />
               </div>
 
+              {/* Max Pickups (for optional chores) */}
+              {isOptional && (
+                <div className="space-y-2">
+                  <Label htmlFor="maxPickups">Max Pickups Per Period (optional)</Label>
+                  <Input
+                    id="maxPickups"
+                    type="number"
+                    min="1"
+                    value={maxPickupsPerPeriod}
+                    onChange={(e) => setMaxPickupsPerPeriod(e.target.value)}
+                    placeholder="Unlimited"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Leave empty for unlimited. Period is based on frequency (daily = per day, weekly = per week).
+                  </p>
+                </div>
+              )}
+
+              {/* Select Children */}
+              {!isOptional && (
+                <div className="space-y-2">
+                  <Label>Assign to</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {children.map((child) => (
+                      <button
+                        key={child._id}
+                        type="button"
+                        onClick={() => toggleChild(child._id)}
+                        className={`flex items-center gap-2 rounded-full px-3 py-1.5 text-sm transition-colors ${
+                          selectedChildren.includes(child._id)
+                            ? 'bg-primary text-primary-foreground'
+                            : 'bg-muted hover:bg-muted/80'
+                        }`}
+                      >
+                        <span>{child.avatarEmoji}</span>
+                        <span>{child.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Joined Chore Toggle */}
-              {selectedChildren.length > 1 && (
+              {!isOptional && selectedChildren.length > 1 && (
                 <div className="flex items-center justify-between rounded-lg border p-3">
                   <div className="space-y-0.5">
                     <Label htmlFor="joined">Joined Chore</Label>
@@ -373,7 +427,7 @@ function ScheduleContent() {
                 onClick={handleAdd}
                 disabled={
                   !selectedTemplate ||
-                  selectedChildren.length === 0 ||
+                  (!isOptional && selectedChildren.length === 0) ||
                   (scheduleType === 'custom' && scheduleDays.length === 0) ||
                   isSubmitting
                 }
@@ -420,6 +474,12 @@ function ScheduleContent() {
                     <p className="font-semibold">
                       {schedule.template?.name ?? 'Unknown Chore'}
                     </p>
+                    {schedule.isOptional && (
+                      <Badge variant="secondary" className="bg-amber-100 text-amber-800">
+                        <Sparkles className="mr-1 h-3 w-3" />
+                        Optional
+                      </Badge>
+                    )}
                     {schedule.isJoined && (
                       <Badge variant="secondary">
                         <Users className="mr-1 h-3 w-3" />
@@ -431,11 +491,20 @@ function ScheduleContent() {
                     )}
                   </div>
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    {schedule.children?.map((child) => (
-                      <span key={child?._id} className="flex items-center gap-1">
-                        {child?.avatarEmoji} {child?.name}
+                    {schedule.isOptional ? (
+                      <span className="flex items-center gap-1">
+                        Anyone can pick up
+                        {schedule.maxPickupsPerPeriod && (
+                          <span> (max {schedule.maxPickupsPerPeriod}/period)</span>
+                        )}
                       </span>
-                    ))}
+                    ) : (
+                      schedule.children?.map((child) => (
+                        <span key={child?._id} className="flex items-center gap-1">
+                          {child?.avatarEmoji} {child?.name}
+                        </span>
+                      ))
+                    )}
                   </div>
                   <p className="text-xs text-muted-foreground">
                     {schedule.scheduleType === 'once' && `One time: ${schedule.startDate}`}
@@ -545,30 +614,74 @@ function ScheduleContent() {
               </p>
             </div>
 
-            {/* Select Children */}
-            <div className="space-y-2">
-              <Label>Assign to</Label>
-              <div className="flex flex-wrap gap-2">
-                {children?.map((child) => (
-                  <button
-                    key={child._id}
-                    type="button"
-                    onClick={() => toggleChild(child._id)}
-                    className={`flex items-center gap-2 rounded-full px-3 py-1.5 text-sm transition-colors ${
-                      selectedChildren.includes(child._id)
-                        ? 'bg-primary text-primary-foreground'
-                        : 'bg-muted hover:bg-muted/80'
-                    }`}
-                  >
-                    <span>{child.avatarEmoji}</span>
-                    <span>{child.name}</span>
-                  </button>
-                ))}
+            {/* Optional Chore Toggle */}
+            <div className="flex items-center justify-between rounded-lg border p-3 bg-amber-50/50">
+              <div className="space-y-0.5">
+                <Label htmlFor="edit-optional" className="flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-amber-500" />
+                  Optional Chore
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  Any child can pick up this chore for extra earnings
+                </p>
               </div>
+              <Switch
+                id="edit-optional"
+                checked={isOptional}
+                onCheckedChange={(checked) => {
+                  setIsOptional(checked)
+                  if (checked) {
+                    setIsJoined(false)
+                    setSelectedChildren([])
+                  }
+                }}
+              />
             </div>
 
+            {/* Max Pickups (for optional chores) */}
+            {isOptional && (
+              <div className="space-y-2">
+                <Label htmlFor="edit-maxPickups">Max Pickups Per Period (optional)</Label>
+                <Input
+                  id="edit-maxPickups"
+                  type="number"
+                  min="1"
+                  value={maxPickupsPerPeriod}
+                  onChange={(e) => setMaxPickupsPerPeriod(e.target.value)}
+                  placeholder="Unlimited"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Leave empty for unlimited. Period is based on frequency (daily = per day, weekly = per week).
+                </p>
+              </div>
+            )}
+
+            {/* Select Children */}
+            {!isOptional && (
+              <div className="space-y-2">
+                <Label>Assign to</Label>
+                <div className="flex flex-wrap gap-2">
+                  {children?.map((child) => (
+                    <button
+                      key={child._id}
+                      type="button"
+                      onClick={() => toggleChild(child._id)}
+                      className={`flex items-center gap-2 rounded-full px-3 py-1.5 text-sm transition-colors ${
+                        selectedChildren.includes(child._id)
+                          ? 'bg-primary text-primary-foreground'
+                          : 'bg-muted hover:bg-muted/80'
+                      }`}
+                    >
+                      <span>{child.avatarEmoji}</span>
+                      <span>{child.name}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Joined Chore Toggle */}
-            {selectedChildren.length > 1 && (
+            {!isOptional && selectedChildren.length > 1 && (
               <div className="flex items-center justify-between rounded-lg border p-3">
                 <div className="space-y-0.5">
                   <Label htmlFor="edit-joined">Joined Chore</Label>
@@ -669,7 +782,7 @@ function ScheduleContent() {
             <Button
               onClick={handleUpdate}
               disabled={
-                selectedChildren.length === 0 ||
+                (!isOptional && selectedChildren.length === 0) ||
                 (scheduleType === 'custom' && scheduleDays.length === 0) ||
                 isSubmitting
               }
