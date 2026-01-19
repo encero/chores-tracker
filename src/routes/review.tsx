@@ -415,7 +415,7 @@ function ReviewContent() {
                                 </span>
                               </div>
                             ) : p.status === 'done' ? (
-                              <div className="flex items-center gap-1">
+                              <div className="flex flex-wrap items-center gap-1">
                                 <Button
                                   variant="ghost"
                                   size="sm"
@@ -470,7 +470,7 @@ function ReviewContent() {
                                   ) : (
                                     <>
                                       <ThumbsDown className="h-3 w-3" />
-                                      <span className="ml-1 text-xs">{formatCurrency(Math.round(baseReward * 0.5), currency)}</span>
+                                      <span className="ml-1 text-xs hidden sm:inline">{formatCurrency(Math.round(baseReward * 0.5), currency)}</span>
                                     </>
                                   )}
                                 </Button>
@@ -482,7 +482,7 @@ function ReviewContent() {
                                   disabled={isRating}
                                 >
                                   <ThumbsUp className="h-3 w-3" />
-                                  <span className="ml-1 text-xs">{formatCurrency(Math.round(baseReward), currency)}</span>
+                                  <span className="ml-1 text-xs hidden sm:inline">{formatCurrency(Math.round(baseReward), currency)}</span>
                                 </Button>
                                 <Button
                                   variant="outline"
@@ -492,7 +492,7 @@ function ReviewContent() {
                                   disabled={isRating}
                                 >
                                   <Star className="h-3 w-3" />
-                                  <span className="ml-1 text-xs">{formatCurrency(Math.round(baseReward * 1.25), currency)}</span>
+                                  <span className="ml-1 text-xs hidden sm:inline">{formatCurrency(Math.round(baseReward * 1.25), currency)}</span>
                                 </Button>
                               </div>
                             ) : (
@@ -783,46 +783,46 @@ function ReviewContent() {
                       </div>
 
                       {/* Quality Rating */}
-                      <div className="flex gap-1">
+                      <div className="grid grid-cols-4 gap-1">
                         <Button
                           type="button"
                           variant="outline"
                           size="sm"
-                          className={`flex-1 h-8 ${quality === 'failed' ? 'border-gray-500 bg-gray-100 text-gray-700' : 'border-gray-300 text-gray-500'}`}
+                          className={`h-8 ${quality === 'failed' ? 'border-gray-500 bg-gray-100 text-gray-700' : 'border-gray-300 text-gray-500'}`}
                           onClick={() => setRateAllQualities(prev => ({ ...prev, [p.childId]: 'failed' }))}
                         >
-                          <X className="h-3 w-3 mr-1" />
-                          Fail
+                          <X className="h-3 w-3 sm:mr-1" />
+                          <span className="hidden sm:inline">Fail</span>
                         </Button>
                         <Button
                           type="button"
                           variant="outline"
                           size="sm"
-                          className={`flex-1 h-8 ${quality === 'bad' ? 'border-red-500 bg-red-50 text-red-700' : 'border-red-200 text-red-600'}`}
+                          className={`h-8 ${quality === 'bad' ? 'border-red-500 bg-red-50 text-red-700' : 'border-red-200 text-red-600'}`}
                           onClick={() => setRateAllQualities(prev => ({ ...prev, [p.childId]: 'bad' }))}
                         >
-                          <ThumbsDown className="h-3 w-3 mr-1" />
-                          Bad
+                          <ThumbsDown className="h-3 w-3 sm:mr-1" />
+                          <span className="hidden sm:inline">Bad</span>
                         </Button>
                         <Button
                           type="button"
                           variant="outline"
                           size="sm"
-                          className={`flex-1 h-8 ${quality === 'good' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-blue-200 text-blue-600'}`}
+                          className={`h-8 ${quality === 'good' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-blue-200 text-blue-600'}`}
                           onClick={() => setRateAllQualities(prev => ({ ...prev, [p.childId]: 'good' }))}
                         >
-                          <ThumbsUp className="h-3 w-3 mr-1" />
-                          Good
+                          <ThumbsUp className="h-3 w-3 sm:mr-1" />
+                          <span className="hidden sm:inline">Good</span>
                         </Button>
                         <Button
                           type="button"
                           variant="outline"
                           size="sm"
-                          className={`flex-1 h-8 ${quality === 'excellent' ? 'border-amber-500 bg-amber-50 text-amber-700' : 'border-amber-200 text-amber-600'}`}
+                          className={`h-8 ${quality === 'excellent' ? 'border-amber-500 bg-amber-50 text-amber-700' : 'border-amber-200 text-amber-600'}`}
                           onClick={() => setRateAllQualities(prev => ({ ...prev, [p.childId]: 'excellent' }))}
                         >
-                          <Star className="h-3 w-3 mr-1" />
-                          Excellent
+                          <Star className="h-3 w-3 sm:mr-1" />
+                          <span className="hidden sm:inline">Excellent</span>
                         </Button>
                       </div>
 
