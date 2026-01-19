@@ -43,6 +43,7 @@ export const create = mutation({
     const id = await ctx.db.insert('withdrawals', {
       childId: args.childId,
       amount: args.amount,
+      difference: -args.amount, // Withdrawals are negative changes to balance
       createdAt: Date.now(),
       note: args.note,
     })

@@ -228,13 +228,14 @@ export const adjustBalance = mutation({
 
     const difference = args.newBalance - child.balance
 
-    // Record the adjustment as a withdrawal (if reducing) or add note
+    // Record the adjustment as a balance history entry
     if (difference !== 0) {
       await ctx.db.insert('withdrawals', {
         childId: args.id,
         amount: Math.abs(difference),
+        difference: difference, // Store signed difference for display
         createdAt: Date.now(),
-        note: `${difference > 0 ? 'Balance adjustment (+)' : 'Balance adjustment (-)'}${args.note ? `: ${args.note}` : ''}`,
+        note: args.note || (difference > 0 ? 'Balance adjustment' : 'Balance adjustment'),
       })
     }
 

@@ -1,12 +1,51 @@
 /**
+ * Currencies that use suffix notation (symbol after the number)
+ */
+const SUFFIX_CURRENCIES = new Set(['Kč', 'CZK', '€', 'EUR', 'kr', 'SEK', 'NOK', 'DKK', 'zł', 'PLN', 'Ft', 'HUF'])
+
+/**
+ * Check if a currency symbol should be displayed as suffix
+ */
+export function isSuffixCurrency(currency: string): boolean {
+  return SUFFIX_CURRENCIES.has(currency)
+}
+
+/**
  * Format cents to a currency string
  * @param cents - Amount in cents
  * @param currency - Currency symbol (default: "$")
  * @returns Formatted currency string
  */
 export function formatCurrency(cents: number, currency: string = '$'): string {
-  const dollars = cents / 100
-  return `${currency}${dollars.toFixed(2)}`
+  const value = cents / 100
+  const formattedValue = value.toFixed(2)
+
+  if (isSuffixCurrency(currency)) {
+    return `${formattedValue} ${currency}`
+  }
+  return `${currency}${formattedValue}`
+}
+
+/**
+ * Format cents to a currency string with sign prefix
+ * @param cents - Amount in cents (can be negative)
+ * @param currency - Currency symbol (default: "$")
+ * @param showPositiveSign - Whether to show + sign for positive amounts
+ * @returns Formatted currency string with sign
+ */
+export function formatCurrencyWithSign(
+  cents: number,
+  currency: string = '$',
+  showPositiveSign: boolean = false
+): string {
+  const absValue = Math.abs(cents) / 100
+  const formattedValue = absValue.toFixed(2)
+  const sign = cents < 0 ? '-' : (showPositiveSign ? '+' : '')
+
+  if (isSuffixCurrency(currency)) {
+    return `${sign}${formattedValue} ${currency}`
+  }
+  return `${sign}${currency}${formattedValue}`
 }
 
 /**

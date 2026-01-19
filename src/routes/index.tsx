@@ -27,7 +27,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { formatCurrency } from '@/lib/currency'
+import { Money } from '@/components/ui/money'
 import { Users, ClipboardCheck, Plus, Check, Zap } from 'lucide-react'
 
 export const Route = createFileRoute('/')({
@@ -321,7 +321,7 @@ function DashboardContent() {
                         <div>
                           <p className="text-sm text-muted-foreground">Balance</p>
                           <p className="text-2xl font-bold text-green-600">
-                            {formatCurrency(child.balance, currency)}
+                            <Money cents={child.balance} currency={currency} />
                           </p>
                         </div>
                         {pendingChores > 0 && (
@@ -380,7 +380,7 @@ function DashboardContent() {
                           {chore.template?.name ?? 'Unknown Chore'}
                         </p>
                         <p className="text-sm text-muted-foreground">
-                          {formatCurrency(chore.totalReward, currency)}
+                          <Money cents={chore.totalReward} currency={currency} />
                           {chore.isJoined && ` total · ${doneCount}/${totalCount} done`}
                         </p>
                       </div>

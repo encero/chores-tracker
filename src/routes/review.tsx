@@ -21,6 +21,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { formatCurrency, QUALITY_COEFFICIENTS, type QualityRating } from '@/lib/currency'
+import { Money } from '@/components/ui/money'
 import { ClipboardCheck, ThumbsDown, ThumbsUp, Star, Users, Check, Settings2, X, Undo2, CheckCircle2 } from 'lucide-react'
 
 export const Route = createFileRoute('/review')({
@@ -343,7 +344,7 @@ function ReviewContent() {
 
                     <div className="text-right">
                       <p className="text-lg font-semibold text-green-600">
-                        {formatCurrency(chore.totalReward, currency)}
+                        <Money cents={chore.totalReward} currency={currency} />
                       </p>
                       {isJoined ? (
                         <p className="text-xs text-muted-foreground">pooled reward</p>
@@ -410,9 +411,13 @@ function ReviewContent() {
                                   {p.quality === 'excellent' && '⭐ '}
                                   {p.quality}
                                 </Badge>
-                                <span className="text-sm font-medium text-green-600">
-                                  +{formatCurrency(p.earnedReward ?? 0, currency)}
-                                </span>
+                                <Money
+                                  cents={p.earnedReward ?? 0}
+                                  currency={currency}
+                                  showSign
+                                  colorize
+                                  className="text-sm font-medium"
+                                />
                               </div>
                             ) : p.status === 'done' ? (
                               <div className="flex flex-wrap items-center gap-1">
@@ -470,7 +475,7 @@ function ReviewContent() {
                                   ) : (
                                     <>
                                       <ThumbsDown className="h-3 w-3" />
-                                      <span className="ml-1 text-xs hidden sm:inline">{formatCurrency(Math.round(baseReward * 0.5), currency)}</span>
+                                      <span className="ml-1 text-xs hidden sm:inline"><Money cents={Math.round(baseReward * 0.5)} currency={currency} /></span>
                                     </>
                                   )}
                                 </Button>
@@ -482,7 +487,7 @@ function ReviewContent() {
                                   disabled={isRating}
                                 >
                                   <ThumbsUp className="h-3 w-3" />
-                                  <span className="ml-1 text-xs hidden sm:inline">{formatCurrency(Math.round(baseReward), currency)}</span>
+                                  <span className="ml-1 text-xs hidden sm:inline"><Money cents={Math.round(baseReward)} currency={currency} /></span>
                                 </Button>
                                 <Button
                                   variant="outline"
@@ -492,7 +497,7 @@ function ReviewContent() {
                                   disabled={isRating}
                                 >
                                   <Star className="h-3 w-3" />
-                                  <span className="ml-1 text-xs hidden sm:inline">{formatCurrency(Math.round(baseReward * 1.25), currency)}</span>
+                                  <span className="ml-1 text-xs hidden sm:inline"><Money cents={Math.round(baseReward * 1.25)} currency={currency} /></span>
                                 </Button>
                               </div>
                             ) : (
@@ -577,7 +582,7 @@ function ReviewContent() {
                     {selectedChoreData.template?.name ?? 'Unknown Chore'}
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    Total reward: {formatCurrency(selectedChoreData.totalReward, currency)}
+                    Total reward: <Money cents={selectedChoreData.totalReward} currency={currency} />
                   </p>
                 </div>
               </div>
@@ -659,9 +664,9 @@ function ReviewContent() {
                           {p.child?.avatarEmoji} {p.child?.name}
                         </span>
                         <span className="text-muted-foreground">
-                          Bad: {formatCurrency(baseReward * 0.5, currency)} /
-                          Good: {formatCurrency(baseReward, currency)} /
-                          Excellent: {formatCurrency(baseReward * 1.25, currency)}
+                          Bad: <Money cents={baseReward * 0.5} currency={currency} /> /
+                          Good: <Money cents={baseReward} currency={currency} /> /
+                          Excellent: <Money cents={baseReward * 1.25} currency={currency} />
                         </span>
                       </div>
                     )
@@ -754,7 +759,7 @@ function ReviewContent() {
                     {rateAllChoreData.template?.name ?? 'Unknown Chore'}
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    Total reward: {formatCurrency(rateAllChoreData.totalReward, currency)}
+                    Total reward: <Money cents={rateAllChoreData.totalReward} currency={currency} />
                   </p>
                 </div>
               </div>
@@ -778,7 +783,7 @@ function ReviewContent() {
                           {p.child?.avatarEmoji} {p.child?.name}
                         </span>
                         <span className="text-sm font-medium text-green-600">
-                          {formatCurrency(earnedReward, currency)}
+                          <Money cents={earnedReward} currency={currency} />
                         </span>
                       </div>
 

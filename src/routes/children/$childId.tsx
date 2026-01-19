@@ -21,6 +21,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { formatCurrency } from '@/lib/currency'
+import { Money } from '@/components/ui/money'
 import { ArrowLeft, Wallet, RefreshCw, ClipboardCheck, History, PenLine, Plus, Minus, Settings2 } from 'lucide-react'
 
 export const Route = createFileRoute('/children/$childId')({
@@ -185,7 +186,7 @@ function ChildDetailContent() {
           <div className="w-full sm:w-auto sm:text-right">
             <p className="text-sm text-muted-foreground">Balance</p>
             <p className="text-3xl sm:text-4xl font-bold text-green-600">
-              {formatCurrency(child.balance, currency)}
+              <Money cents={child.balance} currency={currency} />
             </p>
             <div className="mt-2 flex flex-wrap gap-2 sm:justify-end">
               <Button
@@ -266,7 +267,7 @@ function ChildDetailContent() {
                       </div>
                       <div className="text-right">
                         <p className="font-semibold text-green-600">
-                          {formatCurrency(chore.totalReward, currency)}
+                          <Money cents={chore.totalReward} currency={currency} />
                         </p>
                       </div>
                       <Badge
@@ -312,9 +313,13 @@ function ChildDetailContent() {
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className="font-semibold text-green-600">
-                          +{formatCurrency(myParticipation?.earnedReward ?? 0, currency)}
-                        </p>
+                        <Money
+                          cents={myParticipation?.earnedReward ?? 0}
+                          currency={currency}
+                          showSign
+                          colorize
+                          className="font-semibold"
+                        />
                         {chore.isJoined && myParticipation?.effortPercent && (
                           <p className="text-xs text-muted-foreground">
                             {myParticipation.effortPercent}% effort
@@ -336,34 +341,47 @@ function ChildDetailContent() {
           {!withdrawals || withdrawals.length === 0 ? (
             <EmptyState
               icon={<Wallet />}
-              title="No withdrawals yet"
-              description="Withdrawal history will appear here"
+              title="No balance history yet"
+              description="Withdrawals and adjustments will appear here"
             />
           ) : (
             <div className="space-y-3">
-              {withdrawals.map((withdrawal) => (
-                <Card key={withdrawal._id}>
-                  <CardContent className="flex items-center gap-4 py-4">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-100 text-xl">
-                      💸
-                    </div>
-                    <div className="flex-1">
-                      <p className="font-medium">Withdrawal</p>
-                      <p className="text-sm text-muted-foreground">
-                        {withdrawal.note || 'No note'}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-semibold text-red-600">
-                        -{formatCurrency(withdrawal.amount, currency)}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {new Date(withdrawal.createdAt).toLocaleDateString()}
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+              {withdrawals.map((withdrawal) => {
+                // Use difference if available, otherwise assume negative (withdrawal)
+                const difference = withdrawal.difference ?? -withdrawal.amount
+                const isPositive = difference > 0
+                const icon = isPositive ? '💰' : '💸'
+                const bgColor = isPositive ? 'bg-green-100' : 'bg-red-100'
+                const label = isPositive ? 'Balance added' : 'Withdrawal'
+
+                return (
+                  <Card key={withdrawal._id}>
+                    <CardContent className="flex items-center gap-4 py-4">
+                      <div className={`flex h-10 w-10 items-center justify-center rounded-full ${bgColor} text-xl`}>
+                        {icon}
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-medium">{label}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {withdrawal.note || 'No note'}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <Money
+                          cents={difference}
+                          currency={currency}
+                          showSign
+                          colorize
+                          className="font-semibold"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          {new Date(withdrawal.createdAt).toLocaleDateString()}
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )
+              })}
             </div>
           )}
         </TabsContent>
@@ -376,7 +394,7 @@ function ChildDetailContent() {
             <DialogTitle>Withdraw Balance</DialogTitle>
             <DialogDescription>
               Withdraw from {child.name}'s balance of{' '}
-              {formatCurrency(child.balance, currency)}
+              <Money cents={child.balance} currency={currency} />
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
@@ -428,7 +446,7 @@ function ChildDetailContent() {
           <DialogHeader>
             <DialogTitle>Adjust Balance</DialogTitle>
             <DialogDescription>
-              Current balance: {formatCurrency(child.balance, currency)}
+              Current balance: <Money cents={child.balance} currency={currency} />
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
@@ -508,10 +526,10 @@ function ChildDetailContent() {
                     return (
                       <span>
                         New balance:{' '}
-                        <span className="font-semibold">{formatCurrency(newBal, currency)}</span>
+                        <Money cents={newBal} currency={currency} className="font-semibold" />
                         {diff !== 0 && (
-                          <span className={diff > 0 ? 'text-green-600 ml-2' : 'text-red-600 ml-2'}>
-                            ({diff > 0 ? '+' : ''}{formatCurrency(diff, currency)})
+                          <span className="ml-2">
+                            (<Money cents={diff} currency={currency} showSign colorize />)
                           </span>
                         )}
                       </span>
