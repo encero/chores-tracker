@@ -39,11 +39,10 @@ export const create = mutation({
       throw new Error('Insufficient balance')
     }
 
-    // Create withdrawal record
+    // Create withdrawal record (negative amount)
     const id = await ctx.db.insert('withdrawals', {
       childId: args.childId,
-      amount: args.amount,
-      difference: -args.amount, // Withdrawals are negative changes to balance
+      amount: -args.amount,
       createdAt: Date.now(),
       note: args.note,
     })

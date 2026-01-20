@@ -347,9 +347,7 @@ function ChildDetailContent() {
           ) : (
             <div className="space-y-3">
               {withdrawals.map((withdrawal) => {
-                // Use difference if available, otherwise assume negative (withdrawal)
-                const difference = withdrawal.difference ?? -withdrawal.amount
-                const isPositive = difference > 0
+                const isPositive = withdrawal.amount > 0
                 const icon = isPositive ? '💰' : '💸'
                 const bgColor = isPositive ? 'bg-green-100' : 'bg-red-100'
                 const label = isPositive ? 'Balance added' : 'Withdrawal'
@@ -368,7 +366,7 @@ function ChildDetailContent() {
                       </div>
                       <div className="text-right">
                         <Money
-                          cents={difference}
+                          cents={withdrawal.amount}
                           currency={currency}
                           showSign
                           colorize

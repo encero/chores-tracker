@@ -232,10 +232,9 @@ export const adjustBalance = mutation({
     if (difference !== 0) {
       await ctx.db.insert('withdrawals', {
         childId: args.id,
-        amount: Math.abs(difference),
-        difference: difference, // Store signed difference for display
+        amount: difference, // Signed amount (positive = added, negative = removed)
         createdAt: Date.now(),
-        note: args.note || (difference > 0 ? 'Balance adjustment' : 'Balance adjustment'),
+        note: args.note || 'Balance adjustment',
       })
     }
 
