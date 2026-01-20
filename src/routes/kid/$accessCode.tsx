@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { EmptyState } from '@/components/ui/empty-state'
-import { formatCurrency } from '@/lib/currency'
+import { Money } from '@/components/ui/money'
 import { Check, Clock, Users, Star, PartyPopper, HandCoins, Sparkles, Lock } from 'lucide-react'
 import { TTSButton } from '@/components/ui/tts-button'
 import { useState } from 'react'
@@ -222,12 +222,12 @@ function KidDashboardContent({
                         )}
 
                         <p className="mt-1 text-lg font-semibold text-green-600">
-                          {formatCurrency(
-                            chore.isJoined
+                          <Money
+                            cents={chore.isJoined
                               ? chore.totalReward / (chore.participants?.length ?? 1)
-                              : chore.totalReward,
-                            currency
-                          )}
+                              : chore.totalReward}
+                            currency={currency}
+                          />
                           {chore.isJoined && (
                             <span className="text-sm font-normal text-muted-foreground">
                               {' '}
@@ -406,7 +406,7 @@ function KidDashboardContent({
                         </div>
 
                         <p className={`mt-1 text-lg font-semibold ${isLocked ? 'text-gray-400' : 'text-green-600'}`}>
-                          {formatCurrency(chore.reward, currency)}
+                          <Money cents={chore.reward} currency={currency} />
                         </p>
                       </div>
 
@@ -477,9 +477,13 @@ function KidDashboardContent({
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="font-bold text-green-600">
-                        +{formatCurrency(myParticipation?.earnedReward ?? 0, currency)}
-                      </p>
+                      <Money
+                        cents={myParticipation?.earnedReward ?? 0}
+                        currency={currency}
+                        showSign
+                        colorize
+                        className="font-bold"
+                      />
                       {chore.isJoined && myParticipation?.effortPercent && (
                         <p className="text-xs text-muted-foreground">
                           {myParticipation.effortPercent.toFixed(0)}% úsilí

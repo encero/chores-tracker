@@ -94,10 +94,10 @@ export default defineSchema({
     .index('by_child', ['childId'])
     .index('by_child_status', ['childId', 'status']),
 
-  // Withdrawals (money taken out by children)
+  // Balance history (withdrawals and adjustments)
   withdrawals: defineTable({
     childId: v.id('children'), // Reference to child
-    amount: v.number(), // Amount withdrawn (cents)
+    amount: v.number(), // Signed amount in cents (negative = removal, positive = addition)
     createdAt: v.number(), // Timestamp of withdrawal
     note: v.optional(v.string()), // Optional note (e.g., "Bought toy")
   }).index('by_child', ['childId']),

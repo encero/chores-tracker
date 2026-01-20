@@ -18,7 +18,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
-import { formatCurrency } from '@/lib/currency'
+import { Money } from '@/components/ui/money'
 import { Users, Plus, Pencil, Trash2 } from 'lucide-react'
 
 export const Route = createFileRoute('/children/')({
@@ -199,7 +199,7 @@ function ChildrenContent() {
                 <div className="mb-4">
                   <p className="text-sm text-muted-foreground">Balance</p>
                   <p className="text-2xl font-bold text-green-600">
-                    {formatCurrency(child.balance, currency)}
+                    <Money cents={child.balance} currency={currency} />
                   </p>
                 </div>
                 <div className="flex gap-2">

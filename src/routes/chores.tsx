@@ -18,7 +18,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
-import { formatCurrency } from '@/lib/currency'
+import { Money } from '@/components/ui/money'
 import { ListTodo, Plus, Pencil, Trash2 } from 'lucide-react'
 
 export const Route = createFileRoute('/chores')({
@@ -247,7 +247,7 @@ function ChoresContent() {
                       </p>
                     )}
                     <p className="mt-1 font-medium text-green-600">
-                      {formatCurrency(template.defaultReward, currency)}
+                      <Money cents={template.defaultReward} currency={currency} />
                     </p>
                   </div>
                   <div className="flex gap-1">

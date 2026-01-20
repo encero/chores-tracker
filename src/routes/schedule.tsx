@@ -29,7 +29,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { formatCurrency } from '@/lib/currency'
+import { Money } from '@/components/ui/money'
 import { Calendar, Plus, Trash2, Pause, Play, Users, Pencil, Sparkles } from 'lucide-react'
 
 export const Route = createFileRoute('/schedule')({
@@ -492,7 +492,7 @@ function ScheduleContent() {
                       )}
                     </div>
                     <p className="font-semibold text-green-600">
-                      {formatCurrency(schedule.reward, currency)}
+                      <Money cents={schedule.reward} currency={currency} />
                       {schedule.isJoined && <span className="text-xs text-muted-foreground ml-1">total</span>}
                     </p>
                   </div>
@@ -569,7 +569,7 @@ function ScheduleContent() {
                 </div>
                 <div className="hidden sm:block text-right shrink-0">
                   <p className="font-semibold text-green-600">
-                    {formatCurrency(schedule.reward, currency)}
+                    <Money cents={schedule.reward} currency={currency} />
                   </p>
                   {schedule.isJoined && (
                     <p className="text-xs text-muted-foreground">total</p>

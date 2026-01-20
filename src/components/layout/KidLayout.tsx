@@ -1,6 +1,6 @@
 import { Link } from '@tanstack/react-router'
-import { formatCurrency } from '@/lib/currency'
 import { Home } from 'lucide-react'
+import { Money } from '@/components/ui/money'
 
 interface KidLayoutProps {
   children: React.ReactNode
@@ -48,7 +48,7 @@ export function KidLayout({
             <div className="text-right">
               <p className="text-xs text-pink-700">Tvůj zůstatek</p>
               <p className="text-lg font-bold text-pink-900">
-                {formatCurrency(balance, currency)}
+                <Money cents={balance} currency={currency} />
               </p>
             </div>
           </div>
