@@ -1,4 +1,0 @@
-- [x] when reviewing joined or multi kid chore and one of the kids is not done add button to complete chore from the review tab ( so user doesn't need to leave the page to mark ti done for the kid)
-- [x] one time ( quick assign ) chores should not be shown in the schedule view, does it even need the record in schedules at all?
-- [x] move the go to dashboard on login page above the chore list, so its not under the fold when there is lot of chores
-- [x] collapse done chores on login page with option to expand it
