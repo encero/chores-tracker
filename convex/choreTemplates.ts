@@ -3,9 +3,19 @@ import { mutation, query } from './_generated/server'
 
 // List all chore templates
 export const list = query({
-  args: {},
-  handler: async (ctx) => {
-    return await ctx.db.query('choreTemplates').collect()
+  args: {
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const limit = args.limit ?? 50
+
+    const templates = await ctx.db.query('choreTemplates').collect()
+
+    return {
+      items: templates.slice(0, limit),
+      hasMore: templates.length > limit,
+      totalCount: templates.length,
+    }
   },
 })
 

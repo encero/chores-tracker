@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useState } from 'react'
 import { useMutation, useQuery } from 'convex/react'
-import { Check, CheckCircle2, ClipboardCheck, Settings2, Star, ThumbsDown, ThumbsUp, Undo2, Users, X } from 'lucide-react'
+import { Check, CheckCircle2, ChevronDown, ClipboardCheck, Settings2, Star, ThumbsDown, ThumbsUp, Undo2, Users, X } from 'lucide-react'
 import { api } from '../../convex/_generated/api'
 import type { Id } from '../../convex/_generated/dataModel'
 import type {QualityRating} from '@/lib/currency';
@@ -25,6 +25,8 @@ import {
 import { QUALITY_COEFFICIENTS,  formatCurrency } from '@/lib/currency'
 import { Money } from '@/components/ui/money'
 
+const ITEMS_PER_PAGE = 10
+
 export const Route = createFileRoute('/review')({
   component: ReviewPage,
 })
@@ -40,8 +42,13 @@ function ReviewPage() {
 }
 
 function ReviewContent() {
-  const forReview = useQuery(api.choreInstances.getForReview)
+  const [limit, setLimit] = useState(ITEMS_PER_PAGE)
+  const forReviewResult = useQuery(api.choreInstances.getForReview, { limit })
   const settings = useQuery(api.settings.get)
+
+  const forReview = forReviewResult?.items
+  const hasMore = forReviewResult?.hasMore ?? false
+  const totalCount = forReviewResult?.totalCount ?? 0
 
   const rateJoinedChore = useMutation(api.choreInstances.rateJoined)
   const rateParticipant = useMutation(api.choreInstances.rateParticipant)
@@ -247,7 +254,7 @@ function ReviewContent() {
     setEfforts(newEfforts)
   }
 
-  if (forReview === undefined) {
+  if (forReviewResult === undefined) {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
@@ -263,10 +270,11 @@ function ReviewContent() {
         <h1 className="text-3xl font-bold">Review Chores</h1>
         <p className="text-muted-foreground">
           Rate completed chores and reward the children
+          {totalCount > 0 && ` (${totalCount} awaiting review)`}
         </p>
       </div>
 
-      {forReview.length === 0 ? (
+      {!forReview || forReview.length === 0 ? (
         <EmptyState
           icon={<ClipboardCheck />}
           title="No chores to review"
@@ -550,6 +558,17 @@ function ReviewContent() {
               </Card>
             )
           })}
+          {hasMore && (
+            <div className="flex justify-center pt-2">
+              <Button
+                variant="outline"
+                onClick={() => setLimit((prev) => prev + ITEMS_PER_PAGE)}
+              >
+                <ChevronDown className="mr-2 h-4 w-4" />
+                Load More ({totalCount - (forReview?.length ?? 0)} remaining)
+              </Button>
+            </div>
+          )}
         </div>
       )}
 

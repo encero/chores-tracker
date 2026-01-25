@@ -50,8 +50,11 @@ export const list = query({
   args: {
     childId: v.optional(v.id('children')),
     activeOnly: v.optional(v.boolean()),
+    limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
+    const limit = args.limit ?? 50
+
     let schedules = await ctx.db.query('scheduledChores').collect()
 
     // Filter by child if specified
@@ -79,7 +82,11 @@ export const list = query({
       })
     )
 
-    return enriched
+    return {
+      items: enriched.slice(0, limit),
+      hasMore: enriched.length > limit,
+      totalCount: enriched.length,
+    }
   },
 })
 

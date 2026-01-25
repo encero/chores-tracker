@@ -47,9 +47,12 @@ function DashboardPage() {
 function DashboardContent() {
   const children = useQuery(api.children.list)
   const todayChores = useQuery(api.choreInstances.getToday, {})
-  const forReview = useQuery(api.choreInstances.getForReview)
-  const templates = useQuery(api.choreTemplates.list)
+  const forReviewResult = useQuery(api.choreInstances.getForReview, { limit: 100 })
+  const templatesResult = useQuery(api.choreTemplates.list, {})
   const settings = useQuery(api.settings.get)
+
+  const forReview = forReviewResult?.items
+  const templates = templatesResult?.items
 
   const markDone = useMutation(api.choreInstances.markDone)
   const markMissed = useMutation(api.choreInstances.markMissed)
@@ -142,7 +145,7 @@ function DashboardContent() {
     )
   }
 
-  const reviewCount = forReview?.length ?? 0
+  const reviewCount = forReviewResult?.totalCount ?? 0
   const canQuickAssign = (templates?.length ?? 0) > 0 && children.length > 0
 
   return (

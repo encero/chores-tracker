@@ -1,7 +1,7 @@
 import { Link, createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
 import { useMutation, useQuery } from 'convex/react'
-import { ArrowLeft, ClipboardCheck, History, Minus, PenLine, Plus, RefreshCw, Settings2, Wallet } from 'lucide-react'
+import { ArrowLeft, ChevronDown, ClipboardCheck, History, Minus, PenLine, Plus, RefreshCw, Settings2, Wallet } from 'lucide-react'
 import { api } from '../../../convex/_generated/api'
 import type { Id } from '../../../convex/_generated/dataModel'
 import { AuthGuard } from '@/components/auth/AuthGuard'
@@ -38,9 +38,14 @@ function ChildDetailPage() {
   )
 }
 
+const ITEMS_PER_PAGE = 10
+
 function ChildDetailContent() {
   const { childId } = Route.useParams()
   const navigate = useNavigate()
+
+  const [pendingLimit, setPendingLimit] = useState(ITEMS_PER_PAGE)
+  const [historyLimit, setHistoryLimit] = useState(ITEMS_PER_PAGE)
 
   const child = useQuery(api.children.get, { id: childId as Id<'children'> })
   const settings = useQuery(api.settings.get)
@@ -48,8 +53,15 @@ function ChildDetailContent() {
     childId: childId as Id<'children'>,
     limit: 20,
   })
-  const chores = useQuery(api.choreInstances.getForChild, {
+  const pendingChores = useQuery(api.choreInstances.getForChild, {
     childId: childId as Id<'children'>,
+    status: 'pending',
+    limit: pendingLimit,
+  })
+  const completedChores = useQuery(api.choreInstances.getForChild, {
+    childId: childId as Id<'children'>,
+    status: 'completed',
+    limit: historyLimit,
   })
 
   const createWithdrawal = useMutation(api.withdrawals.create)
@@ -150,8 +162,8 @@ function ChildDetailContent() {
     }
   }
 
-  const completedChores = chores?.filter((c) => c?.status === 'completed') ?? []
-  const pendingChores = chores?.filter((c) => c?.status === 'pending') ?? []
+  const hasMorePending = pendingChores && pendingChores.length === pendingLimit
+  const hasMoreHistory = completedChores && completedChores.length === historyLimit
 
   return (
     <div className="space-y-6">
@@ -234,7 +246,7 @@ function ChildDetailContent() {
         </TabsList>
 
         <TabsContent value="chores" className="mt-4">
-          {pendingChores.length === 0 ? (
+          {!pendingChores || pendingChores.length === 0 ? (
             <EmptyState
               icon={<ClipboardCheck />}
               title="No pending chores"
@@ -281,12 +293,23 @@ function ChildDetailContent() {
                   </Card>
                 )
               })}
+              {hasMorePending && (
+                <div className="flex justify-center pt-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => setPendingLimit((prev) => prev + ITEMS_PER_PAGE)}
+                  >
+                    <ChevronDown className="mr-2 h-4 w-4" />
+                    Load More
+                  </Button>
+                </div>
+              )}
             </div>
           )}
         </TabsContent>
 
         <TabsContent value="history" className="mt-4">
-          {completedChores.length === 0 ? (
+          {!completedChores || completedChores.length === 0 ? (
             <EmptyState
               icon={<History />}
               title="No completed chores yet"
@@ -333,6 +356,17 @@ function ChildDetailContent() {
                   </Card>
                 )
               })}
+              {hasMoreHistory && (
+                <div className="flex justify-center pt-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => setHistoryLimit((prev) => prev + ITEMS_PER_PAGE)}
+                  >
+                    <ChevronDown className="mr-2 h-4 w-4" />
+                    Load More
+                  </Button>
+                </div>
+              )}
             </div>
           )}
         </TabsContent>

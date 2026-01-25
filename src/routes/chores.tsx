@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useState } from 'react'
 import { useMutation, useQuery } from 'convex/react'
-import { ListTodo, Pencil, Plus, Trash2 } from 'lucide-react'
+import { ChevronDown, ListTodo, Pencil, Plus, Trash2 } from 'lucide-react'
 import { api } from '../../convex/_generated/api'
 import { AuthGuard } from '@/components/auth/AuthGuard'
 import { ParentLayout } from '@/components/layout/ParentLayout'
@@ -21,6 +21,8 @@ import {
 } from '@/components/ui/dialog'
 import { Money } from '@/components/ui/money'
 
+const ITEMS_PER_PAGE = 12
+
 export const Route = createFileRoute('/chores')({
   component: ChoresPage,
 })
@@ -38,11 +40,15 @@ function ChoresPage() {
 const CHORE_ICONS = ['🛏️', '🧹', '🍽️', '🗑️', '🐕', '📚', '🧺', '🚿', '🌱', '🚗', '✏️', '🧼']
 
 function ChoresContent() {
-  const templates = useQuery(api.choreTemplates.list)
+  const [limit, setLimit] = useState(ITEMS_PER_PAGE)
+  const templatesResult = useQuery(api.choreTemplates.list, { limit })
   const settings = useQuery(api.settings.get)
   const createTemplate = useMutation(api.choreTemplates.create)
   const updateTemplate = useMutation(api.choreTemplates.update)
   const removeTemplate = useMutation(api.choreTemplates.remove)
+
+  const templates = templatesResult?.items
+  const hasMore = templatesResult?.hasMore ?? false
 
   const [isAddOpen, setIsAddOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -120,7 +126,7 @@ function ChoresContent() {
     setEditingId(template._id)
   }
 
-  if (templates === undefined) {
+  if (templatesResult === undefined) {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
@@ -218,7 +224,7 @@ function ChoresContent() {
         </Dialog>
       </div>
 
-      {templates.length === 0 ? (
+      {!templates || templates.length === 0 ? (
         <EmptyState
           icon={<ListTodo />}
           title="No chore templates yet"
@@ -231,8 +237,9 @@ function ChoresContent() {
           }
         />
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {templates.map((template) => (
+        <div className="space-y-4">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {templates.map((template) => (
             <Card key={template._id}>
               <CardContent className="py-4">
                 <div className="flex items-start gap-4">
@@ -377,6 +384,18 @@ function ChoresContent() {
               </CardContent>
             </Card>
           ))}
+          </div>
+          {hasMore && (
+            <div className="flex justify-center pt-2">
+              <Button
+                variant="outline"
+                onClick={() => setLimit((prev) => prev + ITEMS_PER_PAGE)}
+              >
+                <ChevronDown className="mr-2 h-4 w-4" />
+                Load More
+              </Button>
+            </div>
+          )}
         </div>
       )}
     </div>
