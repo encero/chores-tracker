@@ -17,6 +17,7 @@ import type * as lib_hash from "../lib/hash.js";
 import type * as scheduledChores from "../scheduledChores.js";
 import type * as scheduler from "../scheduler.js";
 import type * as settings from "../settings.js";
+import type * as testing from "../testing.js";
 import type * as withdrawals from "../withdrawals.js";
 
 import type {
@@ -35,6 +36,7 @@ declare const fullApi: ApiFromModules<{
   scheduledChores: typeof scheduledChores;
   scheduler: typeof scheduler;
   settings: typeof settings;
+  testing: typeof testing;
   withdrawals: typeof withdrawals;
 }>;
 
