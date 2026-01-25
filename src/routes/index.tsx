@@ -356,7 +356,7 @@ function DashboardContent() {
       <section>
         <h2 className="mb-4 text-xl font-semibold">Today's Chores</h2>
 
-        {!todayChores || todayChores.length === 0 ? (
+        {!todayChores || todayChores.filter(c => c?.status !== 'missed').length === 0 ? (
           <EmptyState
             icon={<ClipboardCheck />}
             title="No chores for today"
@@ -372,7 +372,7 @@ function DashboardContent() {
           />
         ) : (
           <div className="space-y-3">
-            {todayChores.map((chore) => {
+            {todayChores.filter(c => c?.status !== 'missed').map((chore) => {
               if (!chore) return null
 
               const doneCount = chore.participants?.filter(

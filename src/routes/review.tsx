@@ -22,7 +22,7 @@ import {
 } from '@/components/ui/dialog'
 import { formatCurrency, QUALITY_COEFFICIENTS, type QualityRating } from '@/lib/currency'
 import { Money } from '@/components/ui/money'
-import { ClipboardCheck, ThumbsDown, ThumbsUp, Star, Users, Check, Settings2, X, Undo2, CheckCircle2, Ban } from 'lucide-react'
+import { ClipboardCheck, ThumbsDown, ThumbsUp, Star, Users, Check, Settings2, X, Undo2, CheckCircle2 } from 'lucide-react'
 
 export const Route = createFileRoute('/review')({
   component: ReviewPage,
@@ -47,10 +47,8 @@ function ReviewContent() {
   const rateAllParticipants = useMutation(api.choreInstances.rateAllParticipants)
   const unmarkDone = useMutation(api.choreInstances.unmarkDone)
   const markDone = useMutation(api.choreInstances.markDone)
-  const markMissed = useMutation(api.choreInstances.markMissed)
 
   const [selectedChore, setSelectedChore] = useState<string | null>(null)
-  const [markingMissedId, setMarkingMissedId] = useState<string | null>(null)
   const [unmarkingChildId, setUnmarkingChildId] = useState<string | null>(null)
   const [markingDoneChildId, setMarkingDoneChildId] = useState<string | null>(null)
   const [efforts, setEfforts] = useState<Record<string, number>>({})
@@ -127,16 +125,6 @@ function ReviewContent() {
     }
   }
 
-  const handleMarkMissed = async (choreId: string) => {
-    setMarkingMissedId(choreId)
-    try {
-      await markMissed({
-        instanceId: choreId as Id<'choreInstances'>,
-      })
-    } finally {
-      setMarkingMissedId(null)
-    }
-  }
 
   const initializeRateAll = (chore: NonNullable<typeof forReview>[number]) => {
     if (!chore) return
@@ -370,22 +358,8 @@ function ReviewContent() {
                   {/* Rating Buttons */}
                   {/* Unified participant-based rating UI */}
                   <div className="mt-4 space-y-3">
-                    <div className="flex justify-between">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="border-gray-300 text-gray-500 hover:bg-gray-50 hover:text-gray-700"
-                        onClick={() => handleMarkMissed(chore._id)}
-                        disabled={markingMissedId === chore._id}
-                      >
-                        {markingMissedId === chore._id ? (
-                          <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent mr-1" />
-                        ) : (
-                          <Ban className="mr-1 h-4 w-4" />
-                        )}
-                        Mark as Missed
-                      </Button>
-                      {isMultiKid && chore.participants?.every(p => p.status === 'done') && !chore.participants?.some(p => p.quality) && (
+                    {isMultiKid && chore.participants?.every(p => p.status === 'done') && !chore.participants?.some(p => p.quality) && (
+                      <div className="flex justify-end">
                         <Button
                           variant="outline"
                           size="sm"
@@ -394,8 +368,8 @@ function ReviewContent() {
                           <Users className="mr-1 h-4 w-4" />
                           Rate All at Once
                         </Button>
-                      )}
-                    </div>
+                      </div>
+                    )}
                     {chore.participants?.map((p) => {
                       const isRating = ratingChildId === p.childId
                       const alreadyRated = !!p.quality
