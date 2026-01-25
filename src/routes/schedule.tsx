@@ -1,8 +1,9 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useState } from 'react'
-import { useQuery, useMutation } from 'convex/react'
+import { useMutation, useQuery } from 'convex/react'
+import { Calendar, Pause, Pencil, Play, Plus, Sparkles, Trash2, Users } from 'lucide-react'
 import { api } from '../../convex/_generated/api'
-import { Id } from '../../convex/_generated/dataModel'
+import type { Id } from '../../convex/_generated/dataModel'
 import { AuthGuard } from '@/components/auth/AuthGuard'
 import { ParentLayout } from '@/components/layout/ParentLayout'
 import { Card, CardContent } from '@/components/ui/card'
@@ -30,7 +31,6 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Money } from '@/components/ui/money'
-import { Calendar, Plus, Trash2, Pause, Play, Users, Pencil, Sparkles } from 'lucide-react'
 
 export const Route = createFileRoute('/schedule')({
   component: SchedulePage,
@@ -71,14 +71,14 @@ function ScheduleContent() {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
 
-  const [selectedChildren, setSelectedChildren] = useState<string[]>([])
+  const [selectedChildren, setSelectedChildren] = useState<Array<string>>([])
   const [selectedTemplate, setSelectedTemplate] = useState<string>('')
   const [reward, setReward] = useState('')
   const [isJoined, setIsJoined] = useState(false)
   const [isOptional, setIsOptional] = useState(false)
   const [maxPickupsPerPeriod, setMaxPickupsPerPeriod] = useState('')
   const [scheduleType, setScheduleType] = useState<'once' | 'daily' | 'weekly' | 'custom'>('daily')
-  const [scheduleDays, setScheduleDays] = useState<number[]>([])
+  const [scheduleDays, setScheduleDays] = useState<Array<number>>([])
   const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0])
   const [endDate, setEndDate] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -126,7 +126,7 @@ function ScheduleContent() {
     setIsSubmitting(true)
     try {
       await createSchedule({
-        childIds: isOptional ? [] : selectedChildren as Id<'children'>[],
+        childIds: isOptional ? [] : selectedChildren as Array<Id<'children'>>,
         choreTemplateId: selectedTemplate as Id<'choreTemplates'>,
         reward: Math.round(parseFloat(reward || '0') * 100),
         isJoined: !isOptional && isJoined && selectedChildren.length > 1,
@@ -175,7 +175,7 @@ function ScheduleContent() {
     try {
       await updateSchedule({
         id: editingId as Id<'scheduledChores'>,
-        childIds: isOptional ? [] : selectedChildren as Id<'children'>[],
+        childIds: isOptional ? [] : selectedChildren as Array<Id<'children'>>,
         reward: Math.round(parseFloat(reward || '0') * 100),
         isJoined: !isOptional && isJoined && selectedChildren.length > 1,
         isOptional,

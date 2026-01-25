@@ -131,13 +131,13 @@ function ReviewContent() {
     if (!chore) return
     const equalPercent = 100 / (chore.participants?.length ?? 1)
     const qualities: Record<string, QualityRating> = {}
-    const efforts: Record<string, number> = {}
+    const effortsMap: Record<string, number> = {}
     chore.participants?.forEach((p) => {
       qualities[p.childId] = 'good'
-      efforts[p.childId] = equalPercent
+      effortsMap[p.childId] = equalPercent
     })
     setRateAllQualities(qualities)
-    setRateAllEfforts(efforts)
+    setRateAllEfforts(effortsMap)
     setRateAllNotes('')
     setRateAllChore(chore._id)
   }

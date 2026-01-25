@@ -1,6 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useState } from 'react'
-import { useQuery, useMutation } from 'convex/react'
+import { useMutation, useQuery } from 'convex/react'
+import { ListTodo, Pencil, Plus, Trash2 } from 'lucide-react'
 import { api } from '../../convex/_generated/api'
 import { AuthGuard } from '@/components/auth/AuthGuard'
 import { ParentLayout } from '@/components/layout/ParentLayout'
@@ -19,7 +20,6 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { Money } from '@/components/ui/money'
-import { ListTodo, Plus, Pencil, Trash2 } from 'lucide-react'
 
 export const Route = createFileRoute('/chores')({
   component: ChoresPage,

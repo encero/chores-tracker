@@ -1,16 +1,16 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { useQuery, useMutation } from 'convex/react'
+import { useMutation, useQuery } from 'convex/react'
+import { AlertCircle, Check, Clock, HandCoins, Lock, PartyPopper, Sparkles, Star, Users } from 'lucide-react'
+import { useState } from 'react'
 import { api } from '../../../convex/_generated/api'
-import { Id } from '../../../convex/_generated/dataModel'
+import type { Id } from '../../../convex/_generated/dataModel'
 import { KidLayout } from '@/components/layout/KidLayout'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Money } from '@/components/ui/money'
-import { Check, Clock, Users, Star, PartyPopper, HandCoins, Sparkles, Lock, AlertCircle } from 'lucide-react'
 import { TTSButton } from '@/components/ui/tts-button'
-import { useState } from 'react'
 
 export const Route = createFileRoute('/kid/$accessCode')({
   component: KidDashboard,
