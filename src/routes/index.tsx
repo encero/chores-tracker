@@ -310,7 +310,7 @@ function DashboardContent() {
             {children.map((child) => {
               // Count pending chores for this child
               const pendingChores = todayChores?.filter((chore) =>
-                chore?.participants?.some(
+                chore?.status !== 'missed' && chore?.participants?.some(
                   (p) => p.childId === child._id && p.status === 'pending'
                 )
               ).length ?? 0
