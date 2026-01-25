@@ -1,8 +1,10 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useState } from 'react'
-import { useQuery, useMutation } from 'convex/react'
+import { useMutation, useQuery } from 'convex/react'
+import { Check, CheckCircle2, ClipboardCheck, Settings2, Star, ThumbsDown, ThumbsUp, Undo2, Users, X } from 'lucide-react'
 import { api } from '../../convex/_generated/api'
-import { Id } from '../../convex/_generated/dataModel'
+import type { Id } from '../../convex/_generated/dataModel'
+import type {QualityRating} from '@/lib/currency';
 import { AuthGuard } from '@/components/auth/AuthGuard'
 import { ParentLayout } from '@/components/layout/ParentLayout'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -20,9 +22,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { formatCurrency, QUALITY_COEFFICIENTS, type QualityRating } from '@/lib/currency'
+import { QUALITY_COEFFICIENTS,  formatCurrency } from '@/lib/currency'
 import { Money } from '@/components/ui/money'
-import { ClipboardCheck, ThumbsDown, ThumbsUp, Star, Users, Check, Settings2, X, Undo2, CheckCircle2 } from 'lucide-react'
 
 export const Route = createFileRoute('/review')({
   component: ReviewPage,
