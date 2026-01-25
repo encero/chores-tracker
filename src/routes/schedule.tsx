@@ -527,9 +527,9 @@ function ScheduleContent() {
                         )}
                       </span>
                     ) : (
-                      schedule.children?.map((child) => (
-                        <span key={child?._id} className="flex items-center gap-1">
-                          {child?.avatarEmoji} {child?.name}
+                      schedule.children.map((child) => (
+                        <span key={child._id} className="flex items-center gap-1">
+                          {child.avatarEmoji} {child.name}
                         </span>
                       ))
                     )}
@@ -552,9 +552,9 @@ function ScheduleContent() {
                       )}
                     </span>
                   ) : (
-                    schedule.children?.map((child) => (
-                      <span key={child?._id} className="flex items-center gap-1">
-                        {child?.avatarEmoji} {child?.name}
+                    schedule.children.map((child) => (
+                      <span key={child._id} className="flex items-center gap-1">
+                        {child.avatarEmoji} {child.name}
                       </span>
                     ))
                   )}
@@ -658,8 +658,8 @@ function ScheduleContent() {
             <div className="space-y-2">
               <Label>Chore</Label>
               <div className="flex items-center gap-2 rounded-lg border p-3 bg-muted/50">
-                {templates?.find((t) => t._id === selectedTemplate)?.icon ?? '📋'}
-                <span>{templates?.find((t) => t._id === selectedTemplate)?.name ?? 'Unknown'}</span>
+                {templates.find((t) => t._id === selectedTemplate)?.icon ?? '📋'}
+                <span>{templates.find((t) => t._id === selectedTemplate)?.name ?? 'Unknown'}</span>
               </div>
               <p className="text-xs text-muted-foreground">
                 Chore type cannot be changed. Delete and recreate if needed.
@@ -713,7 +713,7 @@ function ScheduleContent() {
               <div className="space-y-2">
                 <Label>Assign to</Label>
                 <div className="flex flex-wrap gap-2">
-                  {children?.map((child) => (
+                  {children.map((child) => (
                     <button
                       key={child._id}
                       type="button"

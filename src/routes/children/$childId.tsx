@@ -272,10 +272,10 @@ function ChildDetailContent() {
                       </div>
                       <Badge
                         variant={
-                          myParticipation?.status === 'done' ? 'reviewing' : 'pending'
+                          myParticipation.status === 'done' ? 'reviewing' : 'pending'
                         }
                       >
-                        {myParticipation?.status === 'done' ? 'Awaiting Review' : 'Pending'}
+                        {myParticipation.status === 'done' ? 'Awaiting Review' : 'Pending'}
                       </Badge>
                     </CardContent>
                   </Card>
@@ -314,13 +314,13 @@ function ChildDetailContent() {
                       </div>
                       <div className="text-right">
                         <Money
-                          cents={myParticipation?.earnedReward ?? 0}
+                          cents={myParticipation.earnedReward ?? 0}
                           currency={currency}
                           showSign
                           colorize
                           className="font-semibold"
                         />
-                        {chore.isJoined && myParticipation?.effortPercent && (
+                        {chore.isJoined && myParticipation.effortPercent && (
                           <p className="text-xs text-muted-foreground">
                             {myParticipation.effortPercent}% effort
                           </p>

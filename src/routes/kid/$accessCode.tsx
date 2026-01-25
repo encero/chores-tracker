@@ -129,20 +129,20 @@ function KidDashboardContent({
     )
   }
 
-  const myTodayChores = todayChores?.filter((c) =>
-    c?.participants?.some((p) => p.childId === childId)
-  ) ?? []
+  const myTodayChores = todayChores.filter((c) =>
+    c.participants.some((p) => p.childId === childId)
+  )
 
   const pendingChores = myTodayChores.filter(
     (c) =>
-      c?.status === 'pending' &&
-      c?.participants?.find((p) => p.childId === childId)?.status === 'pending'
+      c.status === 'pending' &&
+      c.participants.find((p) => p.childId === childId)?.status === 'pending'
   )
 
   const completedChores = myTodayChores.filter(
     (c) =>
-      c?.participants?.find((p) => p.childId === childId)?.status === 'done' ||
-      c?.status === 'completed'
+      c.participants.find((p) => p.childId === childId)?.status === 'done' ||
+      c.status === 'completed'
   )
 
   const recentCompleted = upcomingChores
@@ -175,10 +175,10 @@ function KidDashboardContent({
             {pendingChores.map((chore) => {
               if (!chore) return null
 
-              const myParticipation = chore.participants?.find(
+              const myParticipation = chore.participants.find(
                 (p) => p.childId === childId
               )
-              const teammates = chore.participants?.filter(
+              const teammates = chore.participants.filter(
                 (p) => p.childId !== childId
               )
               const isOverdue = chore.dueDate < today
@@ -224,7 +224,7 @@ function KidDashboardContent({
                           />
                         </div>
 
-                        {teammates && teammates.length > 0 && (
+                        {teammates.length > 0 && (
                           <div className="mt-1 flex items-center gap-1 text-sm text-muted-foreground">
                             <Users className="h-4 w-4" />
                             <span>S </span>
@@ -243,7 +243,7 @@ function KidDashboardContent({
                         <p className="mt-1 text-lg font-semibold text-green-600">
                           <Money
                             cents={chore.isJoined
-                              ? chore.totalReward / (chore.participants?.length ?? 1)
+                              ? chore.totalReward / chore.participants.length
                               : chore.totalReward}
                             currency={currency}
                           />
@@ -283,7 +283,7 @@ function KidDashboardContent({
             {completedChores.map((chore) => {
               if (!chore) return null
 
-              const myParticipation = chore.participants?.find(
+              const myParticipation = chore.participants.find(
                 (p) => p.childId === childId
               )
 
@@ -321,8 +321,7 @@ function KidDashboardContent({
                           {chore.quality === 'excellent' ? 'Výborně' :
                            chore.quality === 'good' ? 'Dobře' :
                            chore.quality === 'bad' ? 'Špatně' :
-                           chore.quality === 'failed' ? 'Nesplněno' :
-                           chore.quality}
+                           'Nesplněno'}
                         </Badge>
                       )}
 
@@ -497,13 +496,13 @@ function KidDashboardContent({
                     </div>
                     <div className="text-right">
                       <Money
-                        cents={myParticipation?.earnedReward ?? 0}
+                        cents={myParticipation.earnedReward ?? 0}
                         currency={currency}
                         showSign
                         colorize
                         className="font-bold"
                       />
-                      {chore.isJoined && myParticipation?.effortPercent && (
+                      {chore.isJoined && myParticipation.effortPercent && (
                         <p className="text-xs text-muted-foreground">
                           {myParticipation.effortPercent.toFixed(0)}% úsilí
                         </p>
@@ -514,7 +513,7 @@ function KidDashboardContent({
                        chore.quality === 'good' ? 'Dobře' :
                        chore.quality === 'bad' ? 'Špatně' :
                        chore.quality === 'failed' ? 'Nesplněno' :
-                       chore.quality ?? 'N/A'}
+                       'N/A'}
                     </Badge>
                   </CardContent>
                 </Card>
