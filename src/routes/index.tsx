@@ -28,7 +28,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Money } from '@/components/ui/money'
-import { Users, ClipboardCheck, Plus, Check, Zap } from 'lucide-react'
+import { Users, ClipboardCheck, Plus, Check, Zap, Ban, AlertCircle } from 'lucide-react'
 
 export const Route = createFileRoute('/')({
   component: DashboardPage,
@@ -52,9 +52,11 @@ function DashboardContent() {
   const settings = useQuery(api.settings.get)
 
   const markDone = useMutation(api.choreInstances.markDone)
+  const markMissed = useMutation(api.choreInstances.markMissed)
   const createSchedule = useMutation(api.scheduledChores.create)
 
   const [marking, setMarking] = useState<string | null>(null)
+  const [markingMissedId, setMarkingMissedId] = useState<string | null>(null)
   const [quickAssignOpen, setQuickAssignOpen] = useState(false)
   const [selectedChildren, setSelectedChildren] = useState<string[]>([])
   const [selectedTemplate, setSelectedTemplate] = useState<string>('')
@@ -118,6 +120,17 @@ function DashboardContent() {
       })
     } finally {
       setMarking(null)
+    }
+  }
+
+  const handleMarkMissed = async (instanceId: string) => {
+    setMarkingMissedId(instanceId)
+    try {
+      await markMissed({
+        instanceId: instanceId as Id<'choreInstances'>,
+      })
+    } finally {
+      setMarkingMissedId(null)
     }
   }
 
@@ -367,18 +380,29 @@ function DashboardContent() {
               ).length ?? 0
               const totalCount = chore.participants?.length ?? 0
               const allDone = doneCount === totalCount
+              const isOverdue = chore.dueDate < today
 
               return (
-                <Card key={chore._id}>
+                <Card key={chore._id} className={isOverdue && chore.status === 'pending' ? 'border-orange-300' : ''}>
                   <CardContent className="py-4">
                     <div className="flex flex-wrap items-center gap-3 sm:gap-4">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gray-100 text-xl">
+                      <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-xl ${
+                        isOverdue && chore.status === 'pending' ? 'bg-orange-100' : 'bg-gray-100'
+                      }`}>
                         {chore.template?.icon ?? '📋'}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium">
-                          {chore.template?.name ?? 'Unknown Chore'}
-                        </p>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="font-medium">
+                            {chore.template?.name ?? 'Unknown Chore'}
+                          </p>
+                          {isOverdue && chore.status === 'pending' && (
+                            <Badge variant="destructive" className="text-xs">
+                              <AlertCircle className="mr-1 h-3 w-3" />
+                              Overdue ({chore.dueDate})
+                            </Badge>
+                          )}
+                        </div>
                         <p className="text-sm text-muted-foreground">
                           <Money cents={chore.totalReward} currency={currency} />
                           {chore.isJoined && ` total · ${doneCount}/${totalCount} done`}
@@ -432,6 +456,20 @@ function DashboardContent() {
                             </Button>
                           )
                         })}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="border-gray-300 text-gray-500 hover:bg-gray-50 hover:text-gray-700"
+                          onClick={() => handleMarkMissed(chore._id)}
+                          disabled={markingMissedId === chore._id}
+                        >
+                          {markingMissedId === chore._id ? (
+                            <div className="mr-1 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                          ) : (
+                            <Ban className="mr-1 h-4 w-4" />
+                          )}
+                          Mark as Missed
+                        </Button>
                       </div>
                     )}
                   </CardContent>
