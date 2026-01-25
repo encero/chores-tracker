@@ -1,8 +1,9 @@
-import { createFileRoute, Link } from '@tanstack/react-router'
+import { Link, createFileRoute } from '@tanstack/react-router'
 import { useState } from 'react'
-import { useQuery, useMutation } from 'convex/react'
+import { useMutation, useQuery } from 'convex/react'
+import { AlertCircle, Ban, Check, ClipboardCheck, Plus, Users, Zap } from 'lucide-react'
 import { api } from '../../convex/_generated/api'
-import { Id } from '../../convex/_generated/dataModel'
+import type { Id } from '../../convex/_generated/dataModel'
 import { AuthGuard } from '@/components/auth/AuthGuard'
 import { ParentLayout } from '@/components/layout/ParentLayout'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -28,7 +29,6 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Money } from '@/components/ui/money'
-import { Users, ClipboardCheck, Plus, Check, Zap, Ban, AlertCircle } from 'lucide-react'
 
 export const Route = createFileRoute('/')({
   component: DashboardPage,
@@ -58,7 +58,7 @@ function DashboardContent() {
   const [marking, setMarking] = useState<string | null>(null)
   const [markingMissedId, setMarkingMissedId] = useState<string | null>(null)
   const [quickAssignOpen, setQuickAssignOpen] = useState(false)
-  const [selectedChildren, setSelectedChildren] = useState<string[]>([])
+  const [selectedChildren, setSelectedChildren] = useState<Array<string>>([])
   const [selectedTemplate, setSelectedTemplate] = useState<string>('')
   const [reward, setReward] = useState('')
   const [isJoined, setIsJoined] = useState(false)
@@ -96,7 +96,7 @@ function DashboardContent() {
     setIsSubmitting(true)
     try {
       await createSchedule({
-        childIds: selectedChildren as Id<'children'>[],
+        childIds: selectedChildren as Array<Id<'children'>>,
         choreTemplateId: selectedTemplate as Id<'choreTemplates'>,
         reward: Math.round(parseFloat(reward || '0') * 100),
         isJoined: isJoined && selectedChildren.length > 1,
@@ -310,7 +310,7 @@ function DashboardContent() {
             {children.map((child) => {
               // Count pending chores for this child
               const pendingChores = todayChores?.filter((chore) =>
-                chore?.participants?.some(
+                chore?.status !== 'missed' && chore?.participants?.some(
                   (p) => p.childId === child._id && p.status === 'pending'
                 )
               ).length ?? 0
@@ -356,7 +356,7 @@ function DashboardContent() {
       <section>
         <h2 className="mb-4 text-xl font-semibold">Today's Chores</h2>
 
-        {!todayChores || todayChores.length === 0 ? (
+        {!todayChores || todayChores.filter(c => c?.status !== 'missed').length === 0 ? (
           <EmptyState
             icon={<ClipboardCheck />}
             title="No chores for today"
@@ -372,7 +372,7 @@ function DashboardContent() {
           />
         ) : (
           <div className="space-y-3">
-            {todayChores.map((chore) => {
+            {todayChores.filter(c => c?.status !== 'missed').map((chore) => {
               if (!chore) return null
 
               const doneCount = chore.participants?.filter(
