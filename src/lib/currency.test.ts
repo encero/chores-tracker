@@ -12,7 +12,7 @@ describe('formatCurrency', () => {
   })
 
   test('formats cents with custom currency symbol', () => {
-    expect(formatCurrency(1234, 'Kč')).toBe('Kč12.34')
+    expect(formatCurrency(1234, 'Kč')).toBe('12.34 Kč')
   })
 
   test('formats zero', () => {

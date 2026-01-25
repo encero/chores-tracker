@@ -69,6 +69,7 @@ jobs:
           # Start local Convex backend in background
           bunx convex dev --local &
           sleep 5
+          bunx convex env set IS_TEST true --local
           # Run E2E tests with npm (Playwright requires Node)
           VITE_CONVEX_URL=http://127.0.0.1:3210 npm run test:e2e
 
