@@ -10,12 +10,8 @@ crons.daily(
   internal.scheduler.generateDailyChores
 )
 
-// Mark missed chores at midnight
-crons.daily(
-  'mark missed chores',
-  { hourUTC: 5, minuteUTC: 5 }, // 5:05 AM UTC
-  internal.scheduler.markMissedChores
-)
+// Note: We no longer automatically mark chores as missed.
+// Incomplete chores persist until completed or manually dismissed by parents.
 
 // Clean up expired sessions weekly
 crons.weekly(

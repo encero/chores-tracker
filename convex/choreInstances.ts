@@ -9,7 +9,7 @@ const QUALITY_COEFFICIENTS = {
   excellent: 1.25,
 }
 
-// Get today's chores for all or specific child
+// Get today's chores for all or specific child (includes incomplete chores from past days)
 export const getToday = query({
   args: {
     childId: v.optional(v.id('children')),
@@ -17,10 +17,25 @@ export const getToday = query({
   handler: async (ctx, args) => {
     const today = new Date().toISOString().split('T')[0]
 
-    let instances = await ctx.db
+    // Get today's chores
+    const todayInstances = await ctx.db
       .query('choreInstances')
       .withIndex('by_due_date', (q) => q.eq('dueDate', today))
       .collect()
+
+    // Get all pending chores from past days (incomplete chores that should persist)
+    const pendingInstances = await ctx.db
+      .query('choreInstances')
+      .withIndex('by_status', (q) => q.eq('status', 'pending'))
+      .filter((q) => q.lt(q.field('dueDate'), today))
+      .collect()
+
+    // Combine and deduplicate (in case there's overlap)
+    const instanceMap = new Map<string, typeof todayInstances[0]>()
+    for (const instance of [...todayInstances, ...pendingInstances]) {
+      instanceMap.set(instance._id, instance)
+    }
+    const instances = Array.from(instanceMap.values())
 
     // Get participants and filter by child if specified
     const enriched = await Promise.all(

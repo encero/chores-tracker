@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Money } from '@/components/ui/money'
-import { Check, Clock, Users, Star, PartyPopper, HandCoins, Sparkles, Lock } from 'lucide-react'
+import { Check, Clock, Users, Star, PartyPopper, HandCoins, Sparkles, Lock, AlertCircle } from 'lucide-react'
 import { TTSButton } from '@/components/ui/tts-button'
 import { useState } from 'react'
 
@@ -181,6 +181,7 @@ function KidDashboardContent({
               const teammates = chore.participants?.filter(
                 (p) => p.childId !== childId
               )
+              const isOverdue = chore.dueDate < today
 
               return (
                 <Card
@@ -188,21 +189,39 @@ function KidDashboardContent({
                   className={`border-2 transition-all ${
                     justCompleted === chore._id
                       ? 'border-green-400 bg-green-50'
-                      : 'border-purple-200 bg-white'
+                      : isOverdue
+                        ? 'border-orange-300 bg-orange-50/50'
+                        : 'border-purple-200 bg-white'
                   }`}
                 >
                   <CardContent className="py-4">
                     <div className="flex items-center gap-4">
-                      <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-purple-100 to-pink-100 text-3xl shadow-sm">
+                      <div className={`flex h-14 w-14 items-center justify-center rounded-xl text-3xl shadow-sm ${
+                        isOverdue
+                          ? 'bg-gradient-to-br from-orange-100 to-amber-100'
+                          : 'bg-gradient-to-br from-purple-100 to-pink-100'
+                      }`}>
                         {chore.template?.icon ?? '📋'}
                       </div>
 
                       <div className="flex-1">
-                        <div className="flex items-center gap-1">
-                          <h3 className="text-lg font-bold text-purple-900">
+                        <div className="flex items-center gap-1 flex-wrap">
+                          <h3 className={`text-lg font-bold ${isOverdue ? 'text-orange-800' : 'text-purple-900'}`}>
                             {chore.template?.name ?? 'Chore'}
                           </h3>
-                          <TTSButton text={chore.template?.name ?? 'Chore'} language={ttsLanguage} />
+                          {isOverdue && (
+                            <Badge variant="destructive" className="text-xs px-2 py-0.5">
+                              <AlertCircle className="mr-1 h-3 w-3" />
+                              Zpožděno
+                            </Badge>
+                          )}
+                          <TTSButton
+                            text={isOverdue
+                              ? `${chore.template?.name ?? 'Chore'} - zpožděný úkol`
+                              : chore.template?.name ?? 'Chore'
+                            }
+                            language={ttsLanguage}
+                          />
                         </div>
 
                         {teammates && teammates.length > 0 && (
