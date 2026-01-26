@@ -1,15 +1,15 @@
-import { createFileRoute, useNavigate, Link } from '@tanstack/react-router'
+import { Link, createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
-import { useQuery, useMutation } from 'convex/react'
+import { useMutation, useQuery } from 'convex/react'
+import { Check, ChevronDown, ChevronUp, Clock, Lock, Users } from 'lucide-react'
 import { api } from '../../convex/_generated/api'
-import { Id } from '../../convex/_generated/dataModel'
+import type { Id } from '../../convex/_generated/dataModel'
 import { PinPad } from '@/components/auth/PinPad'
 import { useAuth } from '@/hooks/useAuth'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { formatCurrency } from '@/lib/currency'
-import { Check, Clock, Users, Lock, ChevronDown, ChevronUp } from 'lucide-react'
 import { TTSButton } from '@/components/ui/tts-button'
 
 export const Route = createFileRoute('/login')({
@@ -91,7 +91,7 @@ function LoginPage() {
   if (children && todayChores) {
     for (const child of children) {
       const childChores = todayChores.filter((chore) =>
-        chore?.participants?.some((p) => p.childId === child._id)
+        chore.participants.some((p) => p.childId === child._id)
       )
       if (childChores.length > 0) {
         choresByChild.set(child._id, childChores)
@@ -208,18 +208,18 @@ function LoginPage() {
           </Card>
         ) : (
           <div className="space-y-6 max-w-2xl mx-auto">
-            {children?.map((child) => {
+            {children.map((child) => {
               const childChores = choresByChild.get(child._id)
               if (!childChores || childChores.length === 0) return null
 
               const pendingChores = childChores.filter(
                 (c) =>
-                  c?.participants?.find((p) => p.childId === child._id)?.status === 'pending'
+                  c.participants.find((p) => p.childId === child._id)?.status === 'pending'
               )
               const doneChores = childChores.filter(
                 (c) =>
-                  c?.participants?.find((p) => p.childId === child._id)?.status === 'done' ||
-                  c?.status === 'completed'
+                  c.participants.find((p) => p.childId === child._id)?.status === 'done' ||
+                  c.status === 'completed'
               )
               const pendingCount = pendingChores.length
               const doneCount = doneChores.length
@@ -283,7 +283,7 @@ function LoginPage() {
                                 <Users className="h-3 w-3" />
                                 S{' '}
                                 {chore.participants
-                                  ?.filter((p) => p.childId !== child._id)
+                                  .filter((p) => p.childId !== child._id)
                                   .map((p) => p.child?.name)
                                   .join(', ')}
                               </p>
@@ -293,7 +293,7 @@ function LoginPage() {
                             <p className="text-sm font-semibold text-green-600">
                               {formatCurrency(
                                 chore.isJoined
-                                  ? Math.round(chore.totalReward / (chore.participants?.length ?? 1))
+                                  ? Math.round(chore.totalReward / chore.participants.length)
                                   : chore.totalReward,
                                 currency
                               )}
@@ -365,7 +365,7 @@ function LoginPage() {
                                     <Users className="h-3 w-3" />
                                     S{' '}
                                     {chore.participants
-                                      ?.filter((p) => p.childId !== child._id)
+                                      .filter((p) => p.childId !== child._id)
                                       .map((p) => p.child?.name)
                                       .join(', ')}
                                   </p>
@@ -375,7 +375,7 @@ function LoginPage() {
                                 <p className="text-sm font-semibold text-green-600">
                                   {formatCurrency(
                                     chore.isJoined
-                                      ? Math.round(chore.totalReward / (chore.participants?.length ?? 1))
+                                      ? Math.round(chore.totalReward / chore.participants.length)
                                       : chore.totalReward,
                                     currency
                                   )}

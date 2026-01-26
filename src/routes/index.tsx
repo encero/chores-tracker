@@ -309,11 +309,11 @@ function DashboardContent() {
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {children.map((child) => {
               // Count pending chores for this child
-              const pendingChores = todayChores?.filter((chore) =>
-                chore?.status !== 'missed' && chore?.participants?.some(
+              const pendingChores = todayChores.filter((chore) =>
+                chore.status !== 'missed' && chore.participants.some(
                   (p) => p.childId === child._id && p.status === 'pending'
                 )
-              ).length ?? 0
+              ).length
 
               return (
                 <Link key={child._id} to={`/children/${child._id}`}>
@@ -356,7 +356,7 @@ function DashboardContent() {
       <section>
         <h2 className="mb-4 text-xl font-semibold">Today's Chores</h2>
 
-        {!todayChores || todayChores.filter(c => c?.status !== 'missed').length === 0 ? (
+        {todayChores.filter(c => c.status !== 'missed').length === 0 ? (
           <EmptyState
             icon={<ClipboardCheck />}
             title="No chores for today"
@@ -372,13 +372,13 @@ function DashboardContent() {
           />
         ) : (
           <div className="space-y-3">
-            {todayChores.filter(c => c?.status !== 'missed').map((chore) => {
+            {todayChores.filter(c => c.status !== 'missed').map((chore) => {
               if (!chore) return null
 
-              const doneCount = chore.participants?.filter(
+              const doneCount = chore.participants.filter(
                 (p) => p.status === 'done'
-              ).length ?? 0
-              const totalCount = chore.participants?.length ?? 0
+              ).length
+              const totalCount = chore.participants.length
               const allDone = doneCount === totalCount
               const isOverdue = chore.dueDate < today
 
@@ -432,7 +432,7 @@ function DashboardContent() {
                     {/* Participant list with mark done buttons */}
                     {chore.status === 'pending' && (
                       <div className="mt-3 flex flex-wrap gap-2">
-                        {chore.participants?.map((p) => {
+                        {chore.participants.map((p) => {
                           const key = `${chore._id}-${p.childId}`
                           const isMarking = marking === key
                           const isDone = p.status === 'done'

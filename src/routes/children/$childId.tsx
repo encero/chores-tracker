@@ -1,8 +1,9 @@
-import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
+import { Link, createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
-import { useQuery, useMutation } from 'convex/react'
+import { useMutation, useQuery } from 'convex/react'
+import { ArrowLeft, ClipboardCheck, History, Minus, PenLine, Plus, RefreshCw, Settings2, Wallet } from 'lucide-react'
 import { api } from '../../../convex/_generated/api'
-import { Id } from '../../../convex/_generated/dataModel'
+import type { Id } from '../../../convex/_generated/dataModel'
 import { AuthGuard } from '@/components/auth/AuthGuard'
 import { ParentLayout } from '@/components/layout/ParentLayout'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -22,7 +23,6 @@ import {
 } from '@/components/ui/dialog'
 import { formatCurrency } from '@/lib/currency'
 import { Money } from '@/components/ui/money'
-import { ArrowLeft, Wallet, RefreshCw, ClipboardCheck, History, PenLine, Plus, Minus, Settings2 } from 'lucide-react'
 
 export const Route = createFileRoute('/children/$childId')({
   component: ChildDetailPage,
@@ -272,10 +272,10 @@ function ChildDetailContent() {
                       </div>
                       <Badge
                         variant={
-                          myParticipation?.status === 'done' ? 'reviewing' : 'pending'
+                          myParticipation.status === 'done' ? 'reviewing' : 'pending'
                         }
                       >
-                        {myParticipation?.status === 'done' ? 'Awaiting Review' : 'Pending'}
+                        {myParticipation.status === 'done' ? 'Awaiting Review' : 'Pending'}
                       </Badge>
                     </CardContent>
                   </Card>
@@ -314,13 +314,13 @@ function ChildDetailContent() {
                       </div>
                       <div className="text-right">
                         <Money
-                          cents={myParticipation?.earnedReward ?? 0}
+                          cents={myParticipation.earnedReward ?? 0}
                           currency={currency}
                           showSign
                           colorize
                           className="font-semibold"
                         />
-                        {chore.isJoined && myParticipation?.effortPercent && (
+                        {chore.isJoined && myParticipation.effortPercent && (
                           <p className="text-xs text-muted-foreground">
                             {myParticipation.effortPercent}% effort
                           </p>

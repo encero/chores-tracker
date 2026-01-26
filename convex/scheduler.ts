@@ -44,11 +44,12 @@ export const generateDailyChores = internalMutation({
         case 'daily':
           shouldCreate = true
           break
-        case 'weekly':
+        case 'weekly': {
           // Weekly chores happen on the start date's day of week
           const startDay = new Date(schedule.startDate).getDay()
           shouldCreate = dayOfWeek === startDay
           break
+        }
         case 'custom':
           // Check if today is one of the scheduled days
           shouldCreate = schedule.scheduleDays?.includes(dayOfWeek) ?? false

@@ -74,9 +74,9 @@ function ReviewContent() {
 
   const initializeEfforts = (chore: NonNullable<typeof forReview>[number]) => {
     if (!chore) return
-    const equalPercent = 100 / (chore.participants?.length ?? 1)
+    const equalPercent = 100 / chore.participants.length
     const initial: Record<string, number> = {}
-    chore.participants?.forEach((p) => {
+    chore.participants.forEach((p) => {
       initial[p.childId] = equalPercent
     })
     setEfforts(initial)
@@ -129,15 +129,15 @@ function ReviewContent() {
 
   const initializeRateAll = (chore: NonNullable<typeof forReview>[number]) => {
     if (!chore) return
-    const equalPercent = 100 / (chore.participants?.length ?? 1)
+    const equalPercent = 100 / chore.participants.length
     const qualities: Record<string, QualityRating> = {}
-    const efforts: Record<string, number> = {}
-    chore.participants?.forEach((p) => {
+    const effortsMap: Record<string, number> = {}
+    chore.participants.forEach((p) => {
       qualities[p.childId] = 'good'
-      efforts[p.childId] = equalPercent
+      effortsMap[p.childId] = equalPercent
     })
     setRateAllQualities(qualities)
-    setRateAllEfforts(efforts)
+    setRateAllEfforts(effortsMap)
     setRateAllNotes('')
     setRateAllChore(chore._id)
   }
@@ -278,9 +278,9 @@ function ReviewContent() {
             if (!chore) return null
 
             const isJoined = chore.isJoined
-            const isMultiKid = (chore.participants?.length ?? 0) > 1
-            const doneCount = chore.doneCount ?? 0
-            const totalCount = chore.totalCount ?? 0
+            const isMultiKid = chore.participants.length > 1
+            const doneCount = chore.doneCount
+            const totalCount = chore.totalCount
 
             return (
               <Card key={chore._id}>
@@ -304,13 +304,13 @@ function ReviewContent() {
                         {isMultiKid && !isJoined && (
                           <Badge variant="outline">
                             <Users className="mr-1 h-3 w-3" />
-                            {chore.participants?.length} kids
+                            {chore.participants.length} kids
                           </Badge>
                         )}
                       </div>
 
                       <div className="mt-1 flex flex-wrap items-center gap-2 text-sm">
-                        {chore.participants?.map((p) => (
+                        {chore.participants.map((p) => (
                           <span
                             key={p.childId}
                             className={`flex items-center gap-1 ${
@@ -359,7 +359,7 @@ function ReviewContent() {
                   {/* Rating Buttons */}
                   {/* Unified participant-based rating UI */}
                   <div className="mt-4 space-y-3">
-                    {isMultiKid && chore.participants?.every(p => p.status === 'done') && !chore.participants?.some(p => p.quality) && (
+                    {isMultiKid && chore.participants.every(p => p.status === 'done') && !chore.participants.some(p => p.quality) && (
                       <div className="flex justify-end">
                         <Button
                           variant="outline"
@@ -371,11 +371,11 @@ function ReviewContent() {
                         </Button>
                       </div>
                     )}
-                    {chore.participants?.map((p) => {
+                    {chore.participants.map((p) => {
                       const isRating = ratingChildId === p.childId
                       const alreadyRated = !!p.quality
-                      const numParticipants = chore.participants?.length ?? 1
-                      const isCustomEffort = isJoined && customEffortChild?.choreId === chore._id && customEffortChild?.childId === p.childId
+                      const numParticipants = chore.participants.length
+                      const isCustomEffort = isJoined && customEffortChild?.choreId === chore._id && customEffortChild.childId === p.childId
                       // For joined: reward is split by effort. For non-joined: full reward per kid
                       const baseReward = isJoined
                         ? (isCustomEffort
@@ -597,7 +597,7 @@ function ReviewContent() {
                   </p>
                   <ul className="mt-1 text-sm text-amber-700">
                     {selectedChoreData.participants
-                      ?.filter((p) => p.status !== 'done')
+                      .filter((p) => p.status !== 'done')
                       .map((p) => (
                         <li key={p.childId}>
                           {p.child?.avatarEmoji} {p.child?.name} - still pending
@@ -613,7 +613,7 @@ function ReviewContent() {
               {/* Effort Sliders */}
               <div className="space-y-4">
                 <Label>Effort Distribution</Label>
-                {selectedChoreData.participants?.map((p) => {
+                {selectedChoreData.participants.map((p) => {
                   const effort = efforts[p.childId] ?? 0
 
                   return (
@@ -656,7 +656,7 @@ function ReviewContent() {
               <div className="rounded-lg border p-3">
                 <p className="mb-2 text-sm font-medium">Reward Preview</p>
                 <div className="space-y-1 text-sm">
-                  {selectedChoreData.participants?.map((p) => {
+                  {selectedChoreData.participants.map((p) => {
                     const effort = efforts[p.childId] ?? 0
                     const baseReward = (selectedChoreData.totalReward * effort) / 100
 
@@ -769,7 +769,7 @@ function ReviewContent() {
               {/* Individual Ratings */}
               <div className="space-y-4">
                 <Label>Rate Each Participant</Label>
-                {rateAllChoreData.participants?.map((p) => {
+                {rateAllChoreData.participants.map((p) => {
                   const quality = rateAllQualities[p.childId] ?? 'good'
                   const effort = rateAllEfforts[p.childId] ?? 0
                   const coefficient = QUALITY_COEFFICIENTS[quality]

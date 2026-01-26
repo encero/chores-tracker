@@ -31,7 +31,7 @@ function SettingsContent() {
 
   const [currency, setCurrency] = useState(settings?.currency ?? '$')
   const [sessionDays, setSessionDays] = useState(
-    settings?.sessionDurationDays?.toString() ?? '7'
+    settings?.sessionDurationDays.toString() ?? '7'
   )
   const [ttsLanguage, setTtsLanguage] = useState(settings?.ttsLanguage ?? 'cs-CZ')
   const [saving, setSaving] = useState(false)

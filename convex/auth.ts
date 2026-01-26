@@ -1,6 +1,6 @@
 import { v } from 'convex/values'
-import { query, mutation, internalMutation } from './_generated/server'
-import { hashPin, generateSessionToken } from './lib/hash'
+import { internalMutation, mutation, query } from './_generated/server'
+import { generateSessionToken, hashPin } from './lib/hash'
 
 // Login with PIN, return session token
 export const login = mutation({

@@ -1,5 +1,5 @@
 import { v } from 'convex/values'
-import { query, mutation } from './_generated/server'
+import { mutation, query } from './_generated/server'
 
 // Helper to get today's date in ISO format
 function getToday(): string {
@@ -16,7 +16,7 @@ function getDayOfWeek(dateStr?: string): number {
 function shouldCreateInstance(
   schedule: {
     scheduleType: 'once' | 'daily' | 'weekly' | 'custom'
-    scheduleDays?: number[]
+    scheduleDays?: Array<number>
     startDate: string
     endDate?: string
   },
@@ -31,10 +31,11 @@ function shouldCreateInstance(
   switch (schedule.scheduleType) {
     case 'daily':
       return true
-    case 'weekly':
+    case 'weekly': {
       // Weekly chores happen on the start date's day of week
       const startDay = getDayOfWeek(schedule.startDate)
       return dayOfWeek === startDay
+    }
     case 'custom':
       return schedule.scheduleDays?.includes(dayOfWeek) ?? false
     case 'once':
@@ -371,12 +372,13 @@ function getPeriodStart(scheduleType: 'once' | 'daily' | 'weekly' | 'custom'): s
     case 'once':
     case 'custom':
       return now.toISOString().split('T')[0]
-    case 'weekly':
+    case 'weekly': {
       // Get start of current week (Sunday)
       const day = now.getDay()
       const diff = now.getDate() - day
       const weekStart = new Date(now.setDate(diff))
       return weekStart.toISOString().split('T')[0]
+    }
     default:
       return now.toISOString().split('T')[0]
   }
