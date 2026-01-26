@@ -282,6 +282,9 @@ function KidDashboardContent({
             {completedChores.map((chore) => {
               if (!chore) return null
 
+              const myParticipant = chore.participants.find((p) => p.childId === childId)
+              const quality = myParticipant?.quality ?? chore.quality
+
               return (
                 <Card
                   key={chore._id}
@@ -307,15 +310,15 @@ function KidDashboardContent({
                         </p>
                       </div>
 
-                      {chore.status === 'completed' && chore.quality && (
+                      {chore.status === 'completed' && quality && (
                         <Badge
-                          variant={chore.quality}
+                          variant={quality}
                           className="text-base px-3 py-1"
                         >
-                          {chore.quality === 'excellent' && '⭐ '}
-                          {chore.quality === 'excellent' ? 'Výborně' :
-                           chore.quality === 'good' ? 'Dobře' :
-                           chore.quality === 'bad' ? 'Špatně' :
+                          {quality === 'excellent' && '⭐ '}
+                          {quality === 'excellent' ? 'Výborně' :
+                           quality === 'good' ? 'Dobře' :
+                           quality === 'bad' ? 'Špatně' :
                            'Nesplněno'}
                         </Badge>
                       )}
@@ -503,11 +506,11 @@ function KidDashboardContent({
                         </p>
                       )}
                     </div>
-                    <Badge variant={chore.quality ?? 'default'} className="text-xs">
-                      {chore.quality === 'excellent' ? 'Výborně' :
-                       chore.quality === 'good' ? 'Dobře' :
-                       chore.quality === 'bad' ? 'Špatně' :
-                       chore.quality === 'failed' ? 'Nesplněno' :
+                    <Badge variant={myParticipation.quality ?? chore.quality ?? 'default'} className="text-xs">
+                      {(myParticipation.quality ?? chore.quality) === 'excellent' ? 'Výborně' :
+                       (myParticipation.quality ?? chore.quality) === 'good' ? 'Dobře' :
+                       (myParticipation.quality ?? chore.quality) === 'bad' ? 'Špatně' :
+                       (myParticipation.quality ?? chore.quality) === 'failed' ? 'Nesplněno' :
                        'N/A'}
                     </Badge>
                   </CardContent>

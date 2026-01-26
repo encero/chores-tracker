@@ -619,10 +619,34 @@ export const rateParticipant = mutation({
     const allRated = updatedParticipants.every((p) => p.quality)
 
     if (allRated) {
-      // Mark the instance as completed
+      // Calculate aggregate quality for the instance
+      // For single participant, use their quality
+      // For multiple, use weighted average based on effort, or most common
+      let instanceQuality: 'failed' | 'bad' | 'good' | 'excellent'
+      if (updatedParticipants.length === 1) {
+        instanceQuality = updatedParticipants[0].quality!
+      } else {
+        // Calculate weighted average quality score
+        const qualityScores = { failed: 0, bad: 1, good: 2, excellent: 3 }
+        const qualityNames: Array<'failed' | 'bad' | 'good' | 'excellent'> = ['failed', 'bad', 'good', 'excellent']
+        let totalScore = 0
+        let totalEffort = 0
+        for (const p of updatedParticipants) {
+          const effort = p.effortPercent ?? (100 / updatedParticipants.length)
+          totalScore += qualityScores[p.quality!] * effort
+          totalEffort += effort
+        }
+        const avgScore = totalScore / totalEffort
+        // Round to nearest quality level
+        const roundedIndex = Math.round(avgScore)
+        instanceQuality = qualityNames[Math.min(roundedIndex, 3)]
+      }
+
+      // Mark the instance as completed with quality
       await ctx.db.patch(args.instanceId, {
         status: 'completed',
         completedAt: Date.now(),
+        quality: instanceQuality,
       })
     }
 
@@ -704,10 +728,34 @@ export const rateAllParticipants = mutation({
       }
     }
 
-    // Mark instance as completed
+    // Calculate aggregate quality for the instance
+    // For single participant, use their quality
+    // For multiple, use weighted average based on effort
+    let instanceQuality: 'failed' | 'bad' | 'good' | 'excellent'
+    if (args.ratings.length === 1) {
+      instanceQuality = args.ratings[0].quality
+    } else {
+      // Calculate weighted average quality score
+      const qualityScores = { failed: 0, bad: 1, good: 2, excellent: 3 }
+      const qualityNames: Array<'failed' | 'bad' | 'good' | 'excellent'> = ['failed', 'bad', 'good', 'excellent']
+      let totalScore = 0
+      let totalEffort = 0
+      for (const rating of args.ratings) {
+        const effort = rating.effortPercent ?? (100 / args.ratings.length)
+        totalScore += qualityScores[rating.quality] * effort
+        totalEffort += effort
+      }
+      const avgScore = totalScore / totalEffort
+      // Round to nearest quality level
+      const roundedIndex = Math.round(avgScore)
+      instanceQuality = qualityNames[Math.min(roundedIndex, 3)]
+    }
+
+    // Mark instance as completed with quality
     await ctx.db.patch(args.instanceId, {
       status: 'completed',
       completedAt: Date.now(),
+      quality: instanceQuality,
       notes: args.notes,
     })
 

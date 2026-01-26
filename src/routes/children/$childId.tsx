@@ -347,8 +347,8 @@ function ChildDetailContent() {
                           </p>
                         )}
                       </div>
-                      <Badge variant={chore.quality ?? 'default'}>
-                        {chore.quality ?? 'N/A'}
+                      <Badge variant={myParticipation.quality ?? chore.quality ?? 'default'}>
+                        {myParticipation.quality ?? chore.quality ?? 'N/A'}
                       </Badge>
                     </CardContent>
                   </Card>

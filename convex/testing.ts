@@ -49,7 +49,7 @@ export const seedTestData = mutation({
     })
 
     // Create test child
-    await ctx.db.insert('children', {
+    const childId = await ctx.db.insert('children', {
       name: 'Test Child',
       avatarEmoji: '🧒',
       accessCode: 'TEST123',
@@ -64,6 +64,34 @@ export const seedTestData = mutation({
       icon: '🧹',
     })
 
-    return { templateId }
+    // Create a scheduled chore for testing
+    const today = new Date().toISOString().split('T')[0]
+    const scheduledChoreId = await ctx.db.insert('scheduledChores', {
+      childIds: [childId],
+      choreTemplateId: templateId,
+      reward: 5000, // 50 Kč
+      isJoined: false,
+      scheduleType: 'once',
+      startDate: today,
+      isActive: true,
+    })
+
+    // Create a chore instance for today
+    const instanceId = await ctx.db.insert('choreInstances', {
+      scheduledChoreId,
+      dueDate: today,
+      isJoined: false,
+      status: 'pending',
+      totalReward: 5000,
+    })
+
+    // Create participant record
+    await ctx.db.insert('choreParticipants', {
+      choreInstanceId: instanceId,
+      childId,
+      status: 'pending',
+    })
+
+    return { templateId, childId, scheduledChoreId, instanceId }
   },
 })
