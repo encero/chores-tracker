@@ -91,7 +91,7 @@ function LoginPage() {
   if (children && todayChores) {
     for (const child of children) {
       const childChores = todayChores.filter((chore) =>
-        chore.participants.some((p) => p.childId === child._id)
+        chore && chore.participants.some((p) => p.childId === child._id) 
       )
       if (childChores.length > 0) {
         choresByChild.set(child._id, childChores)
@@ -181,7 +181,8 @@ function LoginPage() {
               {children.map((child) => (
                 <Link
                   key={child._id}
-                  to={`/kid/${child.accessCode}`}
+                  to="/kid/$accessCode"
+                  params={{ accessCode: child.accessCode }}
                   className="inline-flex items-center gap-2 rounded-full bg-white px-5 py-3 text-base font-medium text-purple-900 shadow-sm hover:shadow-md transition-shadow border border-purple-100"
                 >
                   <span className="text-xl">{child.avatarEmoji}</span>
@@ -214,12 +215,12 @@ function LoginPage() {
 
               const pendingChores = childChores.filter(
                 (c) =>
-                  c.participants.find((p) => p.childId === child._id)?.status === 'pending'
+                  c?.participants.find((p) => p.childId === child._id)?.status === 'pending'
               )
               const doneChores = childChores.filter(
                 (c) =>
-                  c.participants.find((p) => p.childId === child._id)?.status === 'done' ||
-                  c.status === 'completed'
+                  c?.participants.find((p) => p.childId === child._id)?.status === 'done' ||
+                  c?.status === 'completed'
               )
               const pendingCount = pendingChores.length
               const doneCount = doneChores.length
@@ -229,7 +230,8 @@ function LoginPage() {
                 <div key={child._id} className="bg-white/70 rounded-xl p-4 shadow-sm">
                   {/* Child Header */}
                   <Link
-                    to={`/kid/${child.accessCode}`}
+                    to="/kid/$accessCode"
+                    params={{ accessCode: child.accessCode }}
                     className="mb-3 flex items-center gap-3 group"
                   >
                     <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-purple-100 to-pink-100 text-3xl shadow-sm group-hover:shadow-md transition-shadow">

@@ -1,4 +1,4 @@
-import { Link, createFileRoute, useNavigate } from '@tanstack/react-router'
+import { Link, createFileRoute } from '@tanstack/react-router'
 import { useState } from 'react'
 import { useMutation, useQuery } from 'convex/react'
 import { ArrowLeft, ChevronDown, ClipboardCheck, History, Minus, PenLine, Plus, RefreshCw, Settings2, Wallet } from 'lucide-react'
@@ -6,7 +6,7 @@ import { api } from '../../../convex/_generated/api'
 import type { Id } from '../../../convex/_generated/dataModel'
 import { AuthGuard } from '@/components/auth/AuthGuard'
 import { ParentLayout } from '@/components/layout/ParentLayout'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -21,7 +21,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { formatCurrency } from '@/lib/currency'
 import { Money } from '@/components/ui/money'
 
 export const Route = createFileRoute('/children/$childId')({
@@ -42,7 +41,6 @@ const ITEMS_PER_PAGE = 10
 
 function ChildDetailContent() {
   const { childId } = Route.useParams()
-  const navigate = useNavigate()
 
   const [pendingLimit, setPendingLimit] = useState(ITEMS_PER_PAGE)
   const [historyLimit, setHistoryLimit] = useState(ITEMS_PER_PAGE)

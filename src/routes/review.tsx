@@ -7,7 +7,7 @@ import type { Id } from '../../convex/_generated/dataModel'
 import type {QualityRating} from '@/lib/currency';
 import { AuthGuard } from '@/components/auth/AuthGuard'
 import { ParentLayout } from '@/components/layout/ParentLayout'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -22,7 +22,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { QUALITY_COEFFICIENTS,  formatCurrency } from '@/lib/currency'
+import { QUALITY_COEFFICIENTS } from '@/lib/currency'
 import { Money } from '@/components/ui/money'
 
 const ITEMS_PER_PAGE = 10
@@ -78,16 +78,6 @@ function ReviewContent() {
 
   const selectedChoreData = forReview?.find((c) => c?._id === selectedChore)
   const rateAllChoreData = forReview?.find((c) => c?._id === rateAllChore)
-
-  const initializeEfforts = (chore: NonNullable<typeof forReview>[number]) => {
-    if (!chore) return
-    const equalPercent = 100 / chore.participants.length
-    const initial: Record<string, number> = {}
-    chore.participants.forEach((p) => {
-      initial[p.childId] = equalPercent
-    })
-    setEfforts(initial)
-  }
 
   const handleRateParticipant = async (
     choreId: string,
@@ -197,13 +187,6 @@ function ReviewContent() {
     }
 
     setRateAllEfforts(newEfforts)
-  }
-
-  const handleOpenJoinedReview = (chore: NonNullable<typeof forReview>[number]) => {
-    if (!chore) return
-    setSelectedChore(chore._id)
-    initializeEfforts(chore)
-    setNotes('')
   }
 
   const handleRateJoined = async (quality: QualityRating, forceComplete = false) => {

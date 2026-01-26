@@ -51,7 +51,6 @@ function DashboardContent() {
   const templatesResult = useQuery(api.choreTemplates.list, {})
   const settings = useQuery(api.settings.get)
 
-  const forReview = forReviewResult?.items
   const templates = templatesResult?.items
 
   const markDone = useMutation(api.choreInstances.markDone)
@@ -313,13 +312,13 @@ function DashboardContent() {
             {children.map((child) => {
               // Count pending chores for this child
               const pendingChores = todayChores.filter((chore) =>
-                chore.status !== 'missed' && chore.participants.some(
+                chore?.status !== 'missed' && chore?.participants.some(
                   (p) => p.childId === child._id && p.status === 'pending'
                 )
               ).length
 
               return (
-                <Link key={child._id} to={`/children/${child._id}`}>
+                <Link key={child._id} to="/children/$childId" params={{ childId: child._id }}>
                   <Card className="cursor-pointer transition-shadow hover:shadow-md">
                     <CardHeader className="flex flex-row items-center gap-4 pb-2">
                       <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-blue-100 to-purple-100 text-2xl">
@@ -359,7 +358,7 @@ function DashboardContent() {
       <section>
         <h2 className="mb-4 text-xl font-semibold">Today's Chores</h2>
 
-        {todayChores.filter(c => c.status !== 'missed').length === 0 ? (
+        {todayChores.filter(c => c?.status !== 'missed').length === 0 ? (
           <EmptyState
             icon={<ClipboardCheck />}
             title="No chores for today"
@@ -375,14 +374,13 @@ function DashboardContent() {
           />
         ) : (
           <div className="space-y-3">
-            {todayChores.filter(c => c.status !== 'missed').map((chore) => {
+            {todayChores.filter(c => c?.status !== 'missed').map((chore) => {
               if (!chore) return null
 
               const doneCount = chore.participants.filter(
                 (p) => p.status === 'done'
               ).length
               const totalCount = chore.participants.length
-              const allDone = doneCount === totalCount
               const isOverdue = chore.dueDate < today
 
               return (
