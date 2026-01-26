@@ -1,9 +1,11 @@
 import { HeadContent, Outlet, Scripts, createRootRoute } from '@tanstack/react-router'
 
 import ConvexProvider from '../integrations/convex/provider'
+import { AuthContext, AuthProvider } from '../components/auth/AuthGuard'
 import { getEnvScript } from '../lib/env'
 
 import appCss from '../styles.css?url'
+import { useAuth } from '@/hooks/useAuth'
 
 export const Route = createRootRoute({
   head: () => ({
@@ -89,7 +91,11 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       </head>
       <body>
         <script dangerouslySetInnerHTML={{ __html: getEnvScript() }} />
-        <ConvexProvider>{children}</ConvexProvider>
+        <ConvexProvider>
+          <AuthProvider>
+            {children}
+          </AuthProvider>
+        </ConvexProvider>
         <Scripts />
       </body>
     </html>
