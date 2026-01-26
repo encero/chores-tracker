@@ -84,3 +84,17 @@ jobs:
         with:
           name: playwright-report
           path: playwright-report/
+
+  deploy-convex:
+    name: Deploy Convex Functions
+    runs-on: ubuntu-latest
+    needs: [lint, unit-tests, convex-verify, build, e2e-tests]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install
+      - name: Deploy Convex functions to production
+        run: bunx convex deploy
+        env:
+          CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
