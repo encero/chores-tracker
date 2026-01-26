@@ -1,16 +1,16 @@
 import { Link, createFileRoute, useNavigate } from '@tanstack/react-router'
-import { useEffect, useState } from 'react'
+import { useContext, useEffect, useState } from 'react'
 import { useMutation, useQuery } from 'convex/react'
 import { Check, ChevronDown, ChevronUp, Clock, Lock, Users } from 'lucide-react'
 import { api } from '../../convex/_generated/api'
 import type { Id } from '../../convex/_generated/dataModel'
 import { PinPad } from '@/components/auth/PinPad'
-import { useAuth } from '@/hooks/useAuth'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { formatCurrency } from '@/lib/currency'
 import { TTSButton } from '@/components/ui/tts-button'
+import { AuthContext } from '@/components/auth/AuthGuard'
 
 export const Route = createFileRoute('/login')({
   component: LoginPage,
@@ -18,7 +18,7 @@ export const Route = createFileRoute('/login')({
 
 function LoginPage() {
   const navigate = useNavigate()
-  const { isAuthenticated, isLoading, isPinSetUp, login } = useAuth()
+  const { isAuthenticated, isLoading, isPinSetUp, login } = useContext(AuthContext)
   const settings = useQuery(api.settings.get)
   const todayChores = useQuery(api.choreInstances.getToday, {})
   const children = useQuery(api.children.list)

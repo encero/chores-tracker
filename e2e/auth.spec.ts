@@ -42,7 +42,7 @@ test.describe('Parent Authentication', () => {
 
     // Should show error message (in Czech) or shake animation
     // The PIN pad stays visible with an error state
-    await expect(page.getByText(/pin rodiče/i)).toBeVisible()
+    await expect(page.getByText(/Nesprávný PIN/i)).toBeVisible()
   })
 
   test('unauthenticated user is redirected to login', async ({ page }) => {

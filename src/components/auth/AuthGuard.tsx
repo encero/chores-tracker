@@ -10,12 +10,16 @@ interface AuthContextType {
   isAuthenticated: boolean
   isLoading: boolean
   isPinSetUp: boolean
+  login: (pin: string, rememberMe: boolean) => Promise<boolean>
+  logout: () => void
 }
 
 export const AuthContext = createContext<AuthContextType>({
   isAuthenticated: false,
   isLoading: true,
   isPinSetUp: false,
+  login: async () => {return false},
+  logout: () => {},
 })
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
