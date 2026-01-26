@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useState } from 'react'
 import { useMutation, useQuery } from 'convex/react'
-import { Calendar, Pause, Pencil, Play, Plus, Sparkles, Trash2, Users } from 'lucide-react'
+import { Calendar, ChevronDown, Pause, Pencil, Play, Plus, Sparkles, Trash2, Users } from 'lucide-react'
 import { api } from '../../convex/_generated/api'
 import type { Id } from '../../convex/_generated/dataModel'
 import { AuthGuard } from '@/components/auth/AuthGuard'
@@ -32,6 +32,8 @@ import {
 } from '@/components/ui/select'
 import { Money } from '@/components/ui/money'
 
+const ITEMS_PER_PAGE = 15
+
 export const Route = createFileRoute('/schedule')({
   component: SchedulePage,
 })
@@ -57,10 +59,15 @@ const DAYS_OF_WEEK = [
 ]
 
 function ScheduleContent() {
-  const schedules = useQuery(api.scheduledChores.list, {})
-  const templates = useQuery(api.choreTemplates.list)
+  const [limit, setLimit] = useState(ITEMS_PER_PAGE)
+  const schedulesResult = useQuery(api.scheduledChores.list, { limit })
+  const templatesResult = useQuery(api.choreTemplates.list, {})
   const children = useQuery(api.children.list)
   const settings = useQuery(api.settings.get)
+
+  const schedules = schedulesResult?.items
+  const hasMore = schedulesResult?.hasMore ?? false
+  const templates = templatesResult?.items
 
   const createSchedule = useMutation(api.scheduledChores.create)
   const updateSchedule = useMutation(api.scheduledChores.update)
@@ -195,7 +202,7 @@ function ScheduleContent() {
     await toggleActive({ id: id as Id<'scheduledChores'> })
   }
 
-  if (schedules === undefined || templates === undefined || children === undefined) {
+  if (schedulesResult === undefined || templatesResult === undefined || children === undefined) {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
@@ -439,17 +446,17 @@ function ScheduleContent() {
         </Dialog>
       </div>
 
-      {templates.length === 0 || children.length === 0 ? (
+      {!templates || templates.length === 0 || children.length === 0 ? (
         <EmptyState
           icon={<Calendar />}
-          title={templates.length === 0 ? "No chore templates" : "No children"}
+          title={!templates || templates.length === 0 ? "No chore templates" : "No children"}
           description={
-            templates.length === 0
+            !templates || templates.length === 0
               ? "Create chore templates first before scheduling"
               : "Add children before scheduling chores"
           }
         />
-      ) : schedules.filter((s) => s.scheduleType !== 'once').length === 0 ? (
+      ) : !schedules || schedules.filter((s) => s.scheduleType !== 'once').length === 0 ? (
         <EmptyState
           icon={<Calendar />}
           title="No scheduled chores"
@@ -633,6 +640,17 @@ function ScheduleContent() {
               </CardContent>
             </Card>
           ))}
+          {hasMore && (
+            <div className="flex justify-center pt-2">
+              <Button
+                variant="outline"
+                onClick={() => setLimit((prev) => prev + ITEMS_PER_PAGE)}
+              >
+                <ChevronDown className="mr-2 h-4 w-4" />
+                Load More
+              </Button>
+            </div>
+          )}
         </div>
       )}
 

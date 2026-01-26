@@ -85,8 +85,12 @@ export const getForChild = query({
     childId: v.id('children'),
     startDate: v.optional(v.string()),
     endDate: v.optional(v.string()),
+    limit: v.optional(v.number()),
+    status: v.optional(v.union(v.literal('pending'), v.literal('completed'), v.literal('missed'))),
   },
   handler: async (ctx, args) => {
+    const limit = args.limit ?? 100
+
     // Get all participant records for this child
     const participations = await ctx.db
       .query('choreParticipants')
@@ -101,6 +105,9 @@ export const getForChild = query({
         // Filter by date range
         if (args.startDate && instance.dueDate < args.startDate) return null
         if (args.endDate && instance.dueDate > args.endDate) return null
+
+        // Filter by status if specified
+        if (args.status && instance.status !== args.status) return null
 
         const schedule = await ctx.db.get(instance.scheduledChoreId)
         const template = schedule
@@ -130,21 +137,33 @@ export const getForChild = query({
       })
     )
 
-    return instances.filter(Boolean)
+    // Sort by due date descending and apply limit
+    const filtered = instances.filter(Boolean)
+    filtered.sort((a, b) => {
+      if (!a || !b) return 0
+      return b.dueDate.localeCompare(a.dueDate)
+    })
+
+    return filtered.slice(0, limit)
   },
 })
 
 // Get chores awaiting review
 export const getForReview = query({
-  args: {},
-  handler: async (ctx) => {
-    // Get all pending instances where status is still pending but has completed work
-    const instances = await ctx.db.query('choreInstances').collect()
+  args: {
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const limit = args.limit ?? 20
+
+    // Get pending instances more efficiently using the index
+    const instances = await ctx.db
+      .query('choreInstances')
+      .withIndex('by_status', (q) => q.eq('status', 'pending'))
+      .collect()
 
     const forReview = await Promise.all(
       instances.map(async (instance) => {
-        // Skip already completed or missed
-        if (instance.status !== 'pending') return null
         if (instance.quality) return null // Already rated
 
         const participants = await ctx.db
@@ -184,7 +203,18 @@ export const getForReview = query({
       })
     )
 
-    return forReview.filter(Boolean)
+    const filtered = forReview.filter(Boolean)
+    // Sort by due date ascending (oldest first - most urgent)
+    filtered.sort((a, b) => {
+      if (!a || !b) return 0
+      return a.dueDate.localeCompare(b.dueDate)
+    })
+
+    return {
+      items: filtered.slice(0, limit),
+      hasMore: filtered.length > limit,
+      totalCount: filtered.length,
+    }
   },
 })
 
