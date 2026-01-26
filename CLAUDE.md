@@ -1,5 +1,4 @@
 use bun for js things
-bunx convex dev --once for convex verification add --local if dev credentials arent set
 
 ## Mandatory Validation
 Run lint, build, and tests after finishing changes:
@@ -11,11 +10,16 @@ bun run test          # unit tests
 
 For E2E tests (when modifying UI or user flows):
 ```bash
-bunx convex dev --local &   # start local backend
+bunx convex dev&   # start local backend
 npm run test:e2e            # run E2E tests
 ```
 
-Writing tests before updating code is preferred (TDD approach).
+Writing e2e tests before updating code is preferred (TDD approach).
+
+## Code style
+- never use "any" as a type
+- fix all typescript errors
+- ask explicit premission to disable linting rules, assume permission will not be given
 
 ## Language
 All text on kid accessible pages needs to be in czech language, provide tts on all text that is important to be understood by the kids
