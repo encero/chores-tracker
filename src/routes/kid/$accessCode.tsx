@@ -5,10 +5,9 @@ import { useState } from 'react'
 import { api } from '../../../convex/_generated/api'
 import type { Id } from '../../../convex/_generated/dataModel'
 import { KidLayout } from '@/components/layout/KidLayout'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { EmptyState } from '@/components/ui/empty-state'
 import { Money } from '@/components/ui/money'
 import { TTSButton } from '@/components/ui/tts-button'
 
@@ -130,19 +129,19 @@ function KidDashboardContent({
   }
 
   const myTodayChores = todayChores.filter((c) =>
-    c.participants.some((p) => p.childId === childId)
+    c?.participants.some((p) => p.childId === childId)
   )
 
   const pendingChores = myTodayChores.filter(
     (c) =>
-      c.status === 'pending' &&
+      c?.status === 'pending' &&
       c.participants.find((p) => p.childId === childId)?.status === 'pending'
   )
 
   const completedChores = myTodayChores.filter(
     (c) =>
-      c.participants.find((p) => p.childId === childId)?.status === 'done' ||
-      c.status === 'completed'
+      c?.participants.find((p) => p.childId === childId)?.status === 'done' ||
+      c?.status === 'completed'
   )
 
   const recentCompleted = upcomingChores
@@ -282,10 +281,6 @@ function KidDashboardContent({
             {/* Completed Chores */}
             {completedChores.map((chore) => {
               if (!chore) return null
-
-              const myParticipation = chore.participants.find(
-                (p) => p.childId === childId
-              )
 
               return (
                 <Card

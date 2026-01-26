@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { createContext, useContext, useEffect, } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { useAuth } from '@/hooks/useAuth'
 
@@ -6,8 +6,34 @@ interface AuthGuardProps {
   children: React.ReactNode
 }
 
+interface AuthContextType {
+  isAuthenticated: boolean
+  isLoading: boolean
+  isPinSetUp: boolean
+  login: (pin: string, rememberMe: boolean) => Promise<boolean>
+  logout: () => void
+}
+
+export const AuthContext = createContext<AuthContextType>({
+  isAuthenticated: false,
+  isLoading: true,
+  isPinSetUp: false,
+  login: async () => {return false},
+  logout: () => {},
+})
+
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const auth = useAuth()
+
+  return (
+    <AuthContext value={auth}>
+      {children}
+    </AuthContext>
+  )
+}
+
 export function AuthGuard({ children }: AuthGuardProps) {
-  const { isAuthenticated, isLoading, isPinSetUp } = useAuth()
+  const { isAuthenticated, isLoading, isPinSetUp } = useContext(AuthContext)
   const navigate = useNavigate()
 
   useEffect(() => {

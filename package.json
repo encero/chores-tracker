@@ -11,7 +11,7 @@
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:headed": "playwright test --headed",
-    "lint": "eslint",
+    "lint": "eslint && tsc",
     "format": "prettier",
     "check": "prettier --write . && eslint --fix"
   },

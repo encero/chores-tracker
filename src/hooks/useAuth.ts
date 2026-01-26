@@ -83,7 +83,7 @@ export function useAuth() {
 
   return {
     isAuthenticated,
-    isLoading: isLoading || settings === undefined,
+    isLoading: isLoading || settings === undefined || (verifySession === undefined && !!session),
     isPinSetUp,
     settings,
     login,

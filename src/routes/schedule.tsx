@@ -12,7 +12,6 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Switch } from '@/components/ui/switch'
-import { Checkbox } from '@/components/ui/checkbox'
 import { EmptyState } from '@/components/ui/empty-state'
 import {
   Dialog,
@@ -225,7 +224,7 @@ function ScheduleContent() {
           setIsAddOpen(open)
         }}>
           <DialogTrigger asChild>
-            <Button disabled={templates.length === 0 || children.length === 0}>
+            <Button disabled={templates === undefined || templates.length === 0 || children.length === 0}>
               <Plus className="mr-2 h-4 w-4" />
               Assign Chore
             </Button>
@@ -329,7 +328,7 @@ function ScheduleContent() {
                     <SelectValue placeholder="Select a chore" />
                   </SelectTrigger>
                   <SelectContent>
-                    {templates.map((template) => (
+                    {templates !== undefined && templates.map((template) => (
                       <SelectItem key={template._id} value={template._id}>
                         {template.icon} {template.name}
                       </SelectItem>
@@ -534,10 +533,11 @@ function ScheduleContent() {
                         )}
                       </span>
                     ) : (
-                      schedule.children.map((child) => (
+                      schedule.children.map((child) => (child !== null && (
                         <span key={child._id} className="flex items-center gap-1">
                           {child.avatarEmoji} {child.name}
                         </span>
+                      )
                       ))
                     )}
                   </div>
@@ -559,11 +559,11 @@ function ScheduleContent() {
                       )}
                     </span>
                   ) : (
-                    schedule.children.map((child) => (
+                    schedule.children.map((child) => (child !== null && (
                       <span key={child._id} className="flex items-center gap-1">
                         {child.avatarEmoji} {child.name}
                       </span>
-                    ))
+                    )))
                   )}
                   <span className="text-xs">
                     {schedule.scheduleType === 'once' && `One time: ${schedule.startDate}`}
@@ -675,10 +675,12 @@ function ScheduleContent() {
             {/* Template (read-only) */}
             <div className="space-y-2">
               <Label>Chore</Label>
+              {templates !== undefined && (
               <div className="flex items-center gap-2 rounded-lg border p-3 bg-muted/50">
                 {templates.find((t) => t._id === selectedTemplate)?.icon ?? '📋'}
                 <span>{templates.find((t) => t._id === selectedTemplate)?.name ?? 'Unknown'}</span>
               </div>
+              )}
               <p className="text-xs text-muted-foreground">
                 Chore type cannot be changed. Delete and recreate if needed.
               </p>

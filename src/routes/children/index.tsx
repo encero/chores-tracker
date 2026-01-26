@@ -203,7 +203,7 @@ function ChildrenContent() {
                   </p>
                 </div>
                 <div className="flex gap-2">
-                  <Link to={`/children/${child._id}`} className="flex-1">
+                  <Link to="/children/$childId" params={{ childId: child._id }} className="flex-1">
                     <Button variant="outline" className="w-full">
                       View Details
                     </Button>
