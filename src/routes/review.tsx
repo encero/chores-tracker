@@ -288,7 +288,7 @@ function ReviewContent() {
             const isJoined = chore.isJoined
             const isMultiKid = chore.participants.length > 1
             const doneCount = chore.doneCount
-            const totalCount = chore.totalCount
+            const choreParticipantCount = chore.totalCount
 
             return (
               <Card key={chore._id}>
@@ -338,11 +338,11 @@ function ReviewContent() {
                           <div className="flex h-2 w-full overflow-hidden rounded-full bg-gray-200">
                             <div
                               className="bg-green-500 transition-all"
-                              style={{ width: `${(doneCount / totalCount) * 100}%` }}
+                              style={{ width: `${(doneCount / choreParticipantCount) * 100}%` }}
                             />
                           </div>
                           <p className="mt-1 text-xs text-muted-foreground">
-                            {doneCount}/{totalCount} completed
+                            {doneCount}/{choreParticipantCount} completed
                           </p>
                         </div>
                       )}
@@ -565,7 +565,7 @@ function ReviewContent() {
                 onClick={() => setLimit((prev) => prev + ITEMS_PER_PAGE)}
               >
                 <ChevronDown className="mr-2 h-4 w-4" />
-                Load More ({totalCount - (forReview?.length ?? 0)} remaining)
+                Load More ({totalCount - forReview.length} remaining)
               </Button>
             </div>
           )}
