@@ -71,7 +71,7 @@ jobs:
           # Start local Convex backend in background
           bunx convex dev --local &
           sleep 5
-          bunx convex env set IS_TEST true --local
+          bunx convex env set IS_TEST true
           # Run E2E tests with npm (Playwright requires Node)
           npm run test:e2e
         env:
