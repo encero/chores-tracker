@@ -129,21 +129,38 @@ function KidDashboardContent({
     )
   }
 
+  // Filter to only chores where this child is a participant
+  // The query already does this, but we do it again for safety
   const myTodayChores = todayChores.filter((c) =>
     c.participants.some((p) => p.childId === childId)
   )
 
-  const pendingChores = myTodayChores.filter(
-    (c) =>
-      c.status === 'pending' &&
-      c.participants.find((p) => p.childId === childId)?.status === 'pending'
-  )
+  // Helper to get this child's participant record from a chore
+  const getMyParticipant = (chore: (typeof myTodayChores)[number]) =>
+    chore.participants.find((p) => p.childId === childId)
 
-  const completedChores = myTodayChores.filter(
-    (c) =>
-      c.participants.find((p) => p.childId === childId)?.status === 'done' ||
-      c.status === 'completed'
-  )
+  // Pending chores: instance is pending AND this child's status is pending
+  // For joined chores, even if other kids marked done, this kid still sees it
+  // as pending until THEY mark it done
+  const pendingChores = myTodayChores.filter((c) => {
+    if (c.status !== 'pending') return false
+    const myParticipant = getMyParticipant(c)
+    // If participant not found (shouldn't happen), don't show in pending
+    if (!myParticipant) return false
+    return myParticipant.status === 'pending'
+  })
+
+  // Completed chores: this child marked done OR instance is completed/reviewed
+  // For joined chores, show here once THIS child marks their part done
+  const completedChores = myTodayChores.filter((c) => {
+    // If instance is fully completed (reviewed by parent), show in completed
+    if (c.status === 'completed') return true
+    const myParticipant = getMyParticipant(c)
+    // If participant not found (shouldn't happen), don't show
+    if (!myParticipant) return false
+    // Show in completed if this child marked their part done
+    return myParticipant.status === 'done'
+  })
 
   const recentCompleted = upcomingChores
     ?.filter((c) => c?.status === 'completed')

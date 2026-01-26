@@ -151,6 +151,12 @@ export const create = mutation({
       throw new Error('Joined chores require at least 2 children')
     }
 
+    // Check for duplicate children
+    const uniqueChildIds = new Set(args.childIds)
+    if (uniqueChildIds.size !== args.childIds.length) {
+      throw new Error('Cannot assign the same child multiple times to a chore')
+    }
+
     // Optional chores should have empty childIds (any child can pick up)
     const childIdsToSave = args.isOptional ? [] : args.childIds
 
@@ -247,6 +253,12 @@ export const update = mutation({
         if (!child) {
           throw new Error(`Child ${childId} not found`)
         }
+      }
+
+      // Check for duplicate children
+      const uniqueChildIds = new Set(args.childIds)
+      if (uniqueChildIds.size !== args.childIds.length) {
+        throw new Error('Cannot assign the same child multiple times to a chore')
       }
     }
 
