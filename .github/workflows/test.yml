@@ -33,6 +33,8 @@ jobs:
       - run: bun install
       - name: Verify Convex functions compile
         run: bunx convex dev --local --once
+        env:
+          CONVEX_AGENT_MODE: anonymous
 
   build:
     name: Build
@@ -71,7 +73,10 @@ jobs:
           sleep 5
           bunx convex env set IS_TEST true --local
           # Run E2E tests with npm (Playwright requires Node)
-          VITE_CONVEX_URL=http://127.0.0.1:3210 npm run test:e2e
+          npm run test:e2e
+        env:
+          CONVEX_AGENT_MODE: anonymous
+          VITE_CONVEX_URL: http://127.0.0.1:3210
 
       - name: Upload report
         uses: actions/upload-artifact@v4
