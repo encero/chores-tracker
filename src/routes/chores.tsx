@@ -1,13 +1,12 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useState } from 'react'
 import { useMutation, useQuery } from 'convex/react'
-import { ChevronDown, ListTodo, Pencil, Plus, Trash2 } from 'lucide-react'
+import { ListTodo, Pencil, Plus, Trash2 } from 'lucide-react'
 import { api } from '../../convex/_generated/api'
 import { AuthGuard } from '@/components/auth/AuthGuard'
 import { ParentLayout } from '@/components/layout/ParentLayout'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { EmptyState } from '@/components/ui/empty-state'
 import {
@@ -20,6 +19,13 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { Money } from '@/components/ui/money'
+import { LoadingSpinner } from '@/components/feedback/LoadingSpinner'
+import { PageHeader } from '@/components/page/PageHeader'
+import { LoadMoreButton } from '@/components/page/LoadMoreButton'
+import { FormField } from '@/components/forms/FormField'
+import { CHORE_ICONS, EmojiPicker } from '@/components/forms/EmojiPicker'
+import { RewardInput } from '@/components/forms/RewardInput'
+import { ConfirmDeleteDialog } from '@/components/dialogs/ConfirmDeleteDialog'
 
 const ITEMS_PER_PAGE = 12
 
@@ -36,8 +42,6 @@ function ChoresPage() {
     </AuthGuard>
   )
 }
-
-const CHORE_ICONS = ['🛏️', '🧹', '🍽️', '🗑️', '🐕', '📚', '🧺', '🚿', '🌱', '🚗', '✏️', '🧼']
 
 function ChoresContent() {
   const [limit, setLimit] = useState(ITEMS_PER_PAGE)
@@ -92,7 +96,7 @@ function ChoresContent() {
     setIsSubmitting(true)
     try {
       await updateTemplate({
-        id: id as any,
+        id: id as never,
         name: name.trim(),
         description: description.trim() || undefined,
         defaultReward: Math.round(parseFloat(reward || '0') * 100),
@@ -109,10 +113,11 @@ function ChoresContent() {
     setIsSubmitting(true)
     setDeleteError(null)
     try {
-      await removeTemplate({ id: id as any })
+      await removeTemplate({ id: id as never })
       setDeletingId(null)
-    } catch (err: any) {
-      setDeleteError(err.message || 'Failed to delete')
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to delete'
+      setDeleteError(message)
     } finally {
       setIsSubmitting(false)
     }
@@ -127,102 +132,73 @@ function ChoresContent() {
   }
 
   if (templatesResult === undefined) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-      </div>
-    )
+    return <LoadingSpinner className="py-12" />
   }
+
+  const deletingTemplate = templates?.find((t) => t._id === deletingId)
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Chore Templates</h1>
-          <p className="text-muted-foreground">
-            Manage reusable chore definitions
-          </p>
-        </div>
-
-        <Dialog open={isAddOpen} onOpenChange={(open) => {
-          if (!open) resetForm()
-          setIsAddOpen(open)
-        }}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              Add Template
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Add Chore Template</DialogTitle>
-              <DialogDescription>
-                Create a reusable chore definition
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Name</Label>
-                <Input
+      <PageHeader
+        title="Chore Templates"
+        description="Manage reusable chore definitions"
+        action={
+          <Dialog open={isAddOpen} onOpenChange={(open) => {
+            if (!open) resetForm()
+            setIsAddOpen(open)
+          }}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                Add Template
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Add Chore Template</DialogTitle>
+                <DialogDescription>
+                  Create a reusable chore definition
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <FormField
+                  label="Name"
                   id="name"
                   value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  onChange={setName}
                   placeholder="e.g., Make bed"
                 />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="description">Description (optional)</Label>
-                <Input
+                <FormField
+                  label="Description (optional)"
                   id="description"
                   value={description}
-                  onChange={(e) => setDescription(e.target.value)}
+                  onChange={setDescription}
                   placeholder="Instructions for this chore"
                 />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="reward">Default Reward ({currency})</Label>
-                <Input
-                  id="reward"
-                  type="number"
-                  step="0.01"
-                  min="0"
+                <RewardInput
                   value={reward}
-                  onChange={(e) => setReward(e.target.value)}
-                  placeholder="0.00"
+                  onChange={setReward}
+                  currency={currency}
+                />
+                <EmojiPicker
+                  label="Icon"
+                  options={CHORE_ICONS}
+                  value={icon}
+                  onChange={setIcon}
                 />
               </div>
-              <div className="space-y-2">
-                <Label>Icon</Label>
-                <div className="flex flex-wrap gap-2">
-                  {CHORE_ICONS.map((i) => (
-                    <button
-                      key={i}
-                      type="button"
-                      onClick={() => setIcon(i)}
-                      className={`flex h-10 w-10 items-center justify-center rounded-lg text-xl transition-colors ${
-                        icon === i
-                          ? 'bg-primary text-primary-foreground'
-                          : 'bg-muted hover:bg-muted/80'
-                      }`}
-                    >
-                      {i}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsAddOpen(false)}>
-                Cancel
-              </Button>
-              <Button onClick={handleAdd} disabled={!name.trim() || isSubmitting}>
-                {isSubmitting ? 'Adding...' : 'Add Template'}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setIsAddOpen(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={handleAdd} disabled={!name.trim() || isSubmitting}>
+                  {isSubmitting ? 'Adding...' : 'Add Template'}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        }
+      />
 
       {!templates || templates.length === 0 ? (
         <EmptyState
@@ -240,164 +216,122 @@ function ChoresContent() {
         <div className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {templates.map((template) => (
-            <Card key={template._id}>
-              <CardContent className="py-4">
-                <div className="flex items-start gap-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gray-100 text-2xl">
-                    {template.icon}
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-semibold">{template.name}</h3>
-                    {template.description && (
-                      <p className="text-sm text-muted-foreground line-clamp-2">
-                        {template.description}
+              <Card key={template._id}>
+                <CardContent className="py-4">
+                  <div className="flex items-start gap-4">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gray-100 text-2xl">
+                      {template.icon}
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-semibold">{template.name}</h3>
+                      {template.description && (
+                        <p className="text-sm text-muted-foreground line-clamp-2">
+                          {template.description}
+                        </p>
+                      )}
+                      <p className="mt-1 font-medium text-green-600">
+                        <Money cents={template.defaultReward} currency={currency} />
                       </p>
-                    )}
-                    <p className="mt-1 font-medium text-green-600">
-                      <Money cents={template.defaultReward} currency={currency} />
-                    </p>
-                  </div>
-                  <div className="flex gap-1">
-                    <Dialog
-                      open={editingId === template._id}
-                      onOpenChange={(open) => {
-                        if (!open) {
-                          setEditingId(null)
-                          resetForm()
-                        }
-                      }}
-                    >
-                      <DialogTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => openEdit(template)}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle>Edit Template</DialogTitle>
-                        </DialogHeader>
-                        <div className="space-y-4 py-4">
-                          <div className="space-y-2">
-                            <Label>Name</Label>
-                            <Input
+                    </div>
+                    <div className="flex gap-1">
+                      <Dialog
+                        open={editingId === template._id}
+                        onOpenChange={(open) => {
+                          if (!open) {
+                            setEditingId(null)
+                            resetForm()
+                          }
+                        }}
+                      >
+                        <DialogTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => openEdit(template)}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>Edit Template</DialogTitle>
+                          </DialogHeader>
+                          <div className="space-y-4 py-4">
+                            <FormField
+                              label="Name"
+                              id="edit-name"
                               value={name}
-                              onChange={(e) => setName(e.target.value)}
+                              onChange={setName}
                             />
-                          </div>
-                          <div className="space-y-2">
-                            <Label>Description</Label>
-                            <Input
+                            <FormField
+                              label="Description"
+                              id="edit-description"
                               value={description}
-                              onChange={(e) => setDescription(e.target.value)}
+                              onChange={setDescription}
                             />
-                          </div>
-                          <div className="space-y-2">
-                            <Label>Default Reward ({currency})</Label>
-                            <Input
-                              type="number"
-                              step="0.01"
-                              value={reward}
-                              onChange={(e) => setReward(e.target.value)}
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label>Icon</Label>
-                            <div className="flex flex-wrap gap-2">
-                              {CHORE_ICONS.map((i) => (
-                                <button
-                                  key={i}
-                                  type="button"
-                                  onClick={() => setIcon(i)}
-                                  className={`flex h-10 w-10 items-center justify-center rounded-lg text-xl transition-colors ${
-                                    icon === i
-                                      ? 'bg-primary text-primary-foreground'
-                                      : 'bg-muted hover:bg-muted/80'
-                                  }`}
-                                >
-                                  {i}
-                                </button>
-                              ))}
+                            <div className="space-y-2">
+                              <Label>Default Reward ({currency})</Label>
+                              <RewardInput
+                                value={reward}
+                                onChange={setReward}
+                                currency={currency}
+                              />
                             </div>
+                            <EmojiPicker
+                              label="Icon"
+                              options={CHORE_ICONS}
+                              value={icon}
+                              onChange={setIcon}
+                            />
                           </div>
-                        </div>
-                        <DialogFooter>
-                          <Button variant="outline" onClick={() => setEditingId(null)}>
-                            Cancel
-                          </Button>
-                          <Button
-                            onClick={() => handleEdit(template._id)}
-                            disabled={!name.trim() || isSubmitting}
-                          >
-                            {isSubmitting ? 'Saving...' : 'Save'}
-                          </Button>
-                        </DialogFooter>
-                      </DialogContent>
-                    </Dialog>
-                    <Dialog
-                      open={deletingId === template._id}
-                      onOpenChange={(open) => {
-                        if (!open) {
-                          setDeletingId(null)
+                          <DialogFooter>
+                            <Button variant="outline" onClick={() => setEditingId(null)}>
+                              Cancel
+                            </Button>
+                            <Button
+                              onClick={() => handleEdit(template._id)}
+                              disabled={!name.trim() || isSubmitting}
+                            >
+                              {isSubmitting ? 'Saving...' : 'Save'}
+                            </Button>
+                          </DialogFooter>
+                        </DialogContent>
+                      </Dialog>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => {
                           setDeleteError(null)
-                        }
-                      }}
-                    >
-                      <DialogTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => setDeletingId(template._id)}
-                        >
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle>Delete Template</DialogTitle>
-                          <DialogDescription>
-                            Are you sure you want to delete "{template.name}"?
-                          </DialogDescription>
-                        </DialogHeader>
-                        {deleteError && (
-                          <p className="text-sm text-destructive">{deleteError}</p>
-                        )}
-                        <DialogFooter>
-                          <Button variant="outline" onClick={() => setDeletingId(null)}>
-                            Cancel
-                          </Button>
-                          <Button
-                            variant="destructive"
-                            onClick={() => handleDelete(template._id)}
-                            disabled={isSubmitting}
-                          >
-                            {isSubmitting ? 'Deleting...' : 'Delete'}
-                          </Button>
-                        </DialogFooter>
-                      </DialogContent>
-                    </Dialog>
+                          setDeletingId(template._id)
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                </CardContent>
+              </Card>
+            ))}
           </div>
-          {hasMore && (
-            <div className="flex justify-center pt-2">
-              <Button
-                variant="outline"
-                onClick={() => setLimit((prev) => prev + ITEMS_PER_PAGE)}
-              >
-                <ChevronDown className="mr-2 h-4 w-4" />
-                Load More
-              </Button>
-            </div>
-          )}
+          <LoadMoreButton
+            hasMore={hasMore}
+            onLoadMore={() => setLimit((prev) => prev + ITEMS_PER_PAGE)}
+          />
         </div>
       )}
+
+      <ConfirmDeleteDialog
+        open={deletingId !== null}
+        onClose={() => {
+          setDeletingId(null)
+          setDeleteError(null)
+        }}
+        onConfirm={() => deletingId && handleDelete(deletingId)}
+        itemName={deletingTemplate?.name ?? ''}
+        itemType="Template"
+        isLoading={isSubmitting}
+        error={deleteError}
+      />
     </div>
   )
 }

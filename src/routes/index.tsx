@@ -9,9 +9,6 @@ import { ParentLayout } from '@/components/layout/ParentLayout'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Switch } from '@/components/ui/switch'
 import { EmptyState } from '@/components/ui/empty-state'
 import {
   Dialog,
@@ -21,14 +18,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import { Money } from '@/components/ui/money'
+import { LoadingSpinner } from '@/components/feedback/LoadingSpinner'
+import { PageHeader } from '@/components/page/PageHeader'
+import { ChildSelectPills } from '@/components/forms/ChildSelectPills'
+import { SwitchField } from '@/components/forms/SwitchField'
+import { ChoreTemplateSelect } from '@/components/forms/ChoreTemplateSelect'
+import { RewardInput } from '@/components/forms/RewardInput'
 
 export const Route = createFileRoute('/')({
   component: DashboardPage,
@@ -138,11 +134,7 @@ function DashboardContent() {
   }
 
   if (children === undefined || todayChores === undefined) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-      </div>
-    )
+    return <LoadingSpinner className="py-12" />
   }
 
   const reviewCount = forReviewResult?.totalCount ?? 0
@@ -151,30 +143,28 @@ function DashboardContent() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold">Dashboard</h1>
-          <p className="text-muted-foreground">
-            Overview of today's chores and balances
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {canQuickAssign && (
-            <Button variant="outline" onClick={() => setQuickAssignOpen(true)}>
-              <Zap className="mr-2 h-4 w-4" />
-              Quick Assign
-            </Button>
-          )}
-          {reviewCount > 0 && (
-            <Link to="/review">
-              <Button>
-                <ClipboardCheck className="mr-2 h-4 w-4" />
-                Review ({reviewCount})
+      <PageHeader
+        title="Dashboard"
+        description="Overview of today's chores and balances"
+        action={
+          <div className="flex flex-wrap gap-2">
+            {canQuickAssign && (
+              <Button variant="outline" onClick={() => setQuickAssignOpen(true)}>
+                <Zap className="mr-2 h-4 w-4" />
+                Quick Assign
               </Button>
-            </Link>
-          )}
-        </div>
-      </div>
+            )}
+            {reviewCount > 0 && (
+              <Link to="/review">
+                <Button>
+                  <ClipboardCheck className="mr-2 h-4 w-4" />
+                  Review ({reviewCount})
+                </Button>
+              </Link>
+            )}
+          </div>
+        }
+      />
 
       {/* Quick Assign Dialog */}
       <Dialog
@@ -193,76 +183,38 @@ function DashboardContent() {
           </DialogHeader>
           <div className="space-y-4 py-4">
             {/* Select Children */}
-            <div className="space-y-2">
-              <Label>Assign to</Label>
-              <div className="flex flex-wrap gap-2">
-                {children.map((child) => (
-                  <button
-                    key={child._id}
-                    type="button"
-                    onClick={() => toggleChild(child._id)}
-                    className={`flex items-center gap-2 rounded-full px-3 py-1.5 text-sm transition-colors ${
-                      selectedChildren.includes(child._id)
-                        ? 'bg-primary text-primary-foreground'
-                        : 'bg-muted hover:bg-muted/80'
-                    }`}
-                  >
-                    <span>{child.avatarEmoji}</span>
-                    <span>{child.name}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
+            <ChildSelectPills
+              label="Assign to"
+              children={children}
+              selected={selectedChildren}
+              onToggle={toggleChild}
+            />
 
             {/* Joined Toggle */}
             {selectedChildren.length > 1 && (
-              <div className="flex items-center justify-between rounded-lg border p-3">
-                <div className="space-y-0.5">
-                  <Label htmlFor="joined">Joined Chore</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Children work together, reward is split
-                  </p>
-                </div>
-                <Switch
-                  id="joined"
-                  checked={isJoined}
-                  onCheckedChange={setIsJoined}
-                />
-              </div>
+              <SwitchField
+                id="joined"
+                label="Joined Chore"
+                description="Children work together, reward is split"
+                checked={isJoined}
+                onCheckedChange={setIsJoined}
+              />
             )}
 
             {/* Select Template */}
-            <div className="space-y-2">
-              <Label>Chore</Label>
-              <Select value={selectedTemplate} onValueChange={handleTemplateChange}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a chore" />
-                </SelectTrigger>
-                <SelectContent>
-                  {templates?.map((template) => (
-                    <SelectItem key={template._id} value={template._id}>
-                      {template.icon} {template.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            <ChoreTemplateSelect
+              templates={templates}
+              value={selectedTemplate}
+              onChange={handleTemplateChange}
+            />
 
             {/* Reward */}
-            <div className="space-y-2">
-              <Label htmlFor="reward">
-                {isJoined ? 'Total Reward' : 'Reward'} ({currency})
-              </Label>
-              <Input
-                id="reward"
-                type="number"
-                step="0.01"
-                min="0"
-                value={reward}
-                onChange={(e) => setReward(e.target.value)}
-                placeholder="0.00"
-              />
-            </div>
+            <RewardInput
+              value={reward}
+              onChange={setReward}
+              currency={currency}
+              isTotal={isJoined}
+            />
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setQuickAssignOpen(false)}>

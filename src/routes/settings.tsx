@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { PageHeader } from '@/components/page/PageHeader'
 
 export const Route = createFileRoute('/settings')({
   component: SettingsPage,
@@ -90,12 +91,10 @@ function SettingsContent() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Settings</h1>
-        <p className="text-muted-foreground">
-          Manage your app preferences
-        </p>
-      </div>
+      <PageHeader
+        title="Settings"
+        description="Manage your app preferences"
+      />
 
       <div className="grid gap-6 md:grid-cols-2">
         {/* General Settings */}

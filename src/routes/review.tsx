@@ -1,10 +1,11 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useState } from 'react'
 import { useMutation, useQuery } from 'convex/react'
-import { CheckCircle2, ChevronDown, ClipboardCheck, Settings2, Star, ThumbsDown, ThumbsUp, Undo2, Users, X } from 'lucide-react'
+import { CheckCircle2, ClipboardCheck, Settings2, Star, ThumbsDown, ThumbsUp, Undo2, Users, X } from 'lucide-react'
 import { api } from '../../convex/_generated/api'
 import type { Id } from '../../convex/_generated/dataModel'
-import type {QualityRating} from '@/lib/currency';
+import type { QualityRating } from '@/lib/currency'
+import { QUALITY_COEFFICIENTS } from '@/lib/currency'
 import { AuthGuard } from '@/components/auth/AuthGuard'
 import { ParentLayout } from '@/components/layout/ParentLayout'
 import { Card, CardContent } from '@/components/ui/card'
@@ -22,8 +23,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { QUALITY_COEFFICIENTS } from '@/lib/currency'
 import { Money } from '@/components/ui/money'
+import { LoadingSpinner } from '@/components/feedback/LoadingSpinner'
+import { PageHeader } from '@/components/page/PageHeader'
+import { LoadMoreButton } from '@/components/page/LoadMoreButton'
+import { EffortSlider } from '@/components/chores/EffortSlider'
 
 const ITEMS_PER_PAGE = 10
 
@@ -238,24 +242,17 @@ function ReviewContent() {
   }
 
   if (forReviewResult === undefined) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-      </div>
-    )
+    return <LoadingSpinner className="py-12" />
   }
 
   const totalEffort = Object.values(efforts).reduce((sum, v) => sum + v, 0)
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Review Chores</h1>
-        <p className="text-muted-foreground">
-          Rate completed chores and reward the children
-          {totalCount > 0 && ` (${totalCount} awaiting review)`}
-        </p>
-      </div>
+      <PageHeader
+        title="Review Chores"
+        description={`Rate completed chores and reward the children${totalCount > 0 ? ` (${totalCount} awaiting review)` : ''}`}
+      />
 
       {!forReview || forReview.length === 0 ? (
         <EmptyState
@@ -342,9 +339,7 @@ function ReviewContent() {
                       const isRating = ratingChildId === p.childId
                       const alreadyRated = !!p.quality
                       const numParticipants = chore.participants.length
-                      // const isCustomEffort = isJoined && customEffortChild?.choreId === chore._id && customEffortChild.childId === p.childId
                       const isCustomEffort = customEffortChild?.choreId === chore._id && customEffortChild.childId === p.childId
-                      // For joined: reward is split by effort. For non-joined: full reward per kid
                       const baseReward = isCustomEffort
                             ? chore.totalReward * (customEffortValue / 100)
                             : chore.totalReward / numParticipants
@@ -510,17 +505,11 @@ function ReviewContent() {
               </Card>
             )
           })}
-          {hasMore && (
-            <div className="flex justify-center pt-2">
-              <Button
-                variant="outline"
-                onClick={() => setLimit((prev) => prev + ITEMS_PER_PAGE)}
-              >
-                <ChevronDown className="mr-2 h-4 w-4" />
-                Load More ({totalCount - forReview.length} remaining)
-              </Button>
-            </div>
-          )}
+          <LoadMoreButton
+            hasMore={hasMore}
+            onLoadMore={() => setLimit((prev) => prev + ITEMS_PER_PAGE)}
+            remaining={totalCount - forReview.length}
+          />
         </div>
       )}
 
@@ -584,27 +573,14 @@ function ReviewContent() {
               {/* Effort Sliders */}
               <div className="space-y-4">
                 <Label>Effort Distribution</Label>
-                {selectedChoreData.participants.map((p) => {
-                  const effort = efforts[p.childId] ?? 0
-
-                  return (
-                    <div key={p.childId} className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="flex items-center gap-2">
-                          {p.child?.avatarEmoji} {p.child?.name}
-                        </span>
-                        <span className="font-medium">{effort.toFixed(0)}%</span>
-                      </div>
-                      <Slider
-                        value={[effort]}
-                        min={0}
-                        max={100}
-                        step={5}
-                        onValueChange={([v]) => adjustEffort(p.childId, v)}
-                      />
-                    </div>
-                  )
-                })}
+                {selectedChoreData.participants.map((p) => (
+                  <EffortSlider
+                    key={p.childId}
+                    participant={p}
+                    value={efforts[p.childId] ?? 0}
+                    onChange={(v) => adjustEffort(p.childId, v)}
+                  />
+                ))}
                 {Math.abs(totalEffort - 100) > 0.1 && (
                   <p className="text-sm text-destructive">
                     Effort must total 100% (currently {totalEffort.toFixed(0)}%)
@@ -744,7 +720,6 @@ function ReviewContent() {
                   const quality = rateAllQualities[p.childId] ?? 'good'
                   const effort = rateAllEfforts[p.childId] ?? 0
                   const coefficient = QUALITY_COEFFICIENTS[quality]
-                  // For joined: reward is split by effort. For non-joined: full reward per kid
                   const earnedReward = rateAllChoreData.isJoined
                     ? Math.round((rateAllChoreData.totalReward * effort / 100) * coefficient)
                     : Math.round(rateAllChoreData.totalReward * coefficient)

@@ -10,6 +10,8 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Money } from '@/components/ui/money'
 import { TTSButton } from '@/components/ui/tts-button'
+import { LoadingSpinner } from '@/components/feedback/LoadingSpinner'
+import { KidSectionHeader } from '@/components/page/KidSectionHeader'
 
 export const Route = createFileRoute('/kid/$accessCode')({
   component: KidDashboard,
@@ -25,7 +27,7 @@ function KidDashboard() {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-blue-50 to-purple-50">
         <div className="flex flex-col items-center gap-4">
-          <div className="h-12 w-12 animate-spin rounded-full border-4 border-purple-500 border-t-transparent" />
+          <LoadingSpinner size="lg" />
           <p className="text-lg text-purple-600">Načítání...</p>
         </div>
       </div>
@@ -121,11 +123,7 @@ function KidDashboardContent({
   }
 
   if (todayChores === undefined) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-purple-500 border-t-transparent" />
-      </div>
-    )
+    return <LoadingSpinner className="py-12" />
   }
 
   const myTodayChores = todayChores.filter((c) =>
@@ -152,11 +150,11 @@ function KidDashboardContent({
     <div className="space-y-6">
       {/* Today's Chores */}
       <section>
-        <h2 className="mb-4 flex items-center gap-2 text-xl font-bold text-purple-900">
-          <Clock className="h-5 w-5" />
-          Dnešní úkoly
-          <TTSButton text="Dnešní úkoly" language={ttsLanguage} />
-        </h2>
+        <KidSectionHeader
+          icon={<Clock className="h-5 w-5" />}
+          text="Dnešní úkoly"
+          ttsLanguage={ttsLanguage}
+        />
 
         {pendingChores.length === 0 && completedChores.length === 0 ? (
           <Card className="border-2 border-dashed border-purple-200 bg-white/50">
@@ -338,11 +336,11 @@ function KidDashboardContent({
       {/* Available Optional Chores */}
       {availableOptional && availableOptional.length > 0 && (
         <section>
-          <h2 className="mb-4 flex items-center gap-2 text-xl font-bold text-purple-900">
-            <Sparkles className="h-5 w-5" />
-            Dostupné extra úkoly
-            <TTSButton text="Dostupné extra úkoly" language={ttsLanguage} />
-          </h2>
+          <KidSectionHeader
+            icon={<Sparkles className="h-5 w-5" />}
+            text="Dostupné extra úkoly"
+            ttsLanguage={ttsLanguage}
+          />
 
           {/* Show message when daily chores are not done */}
           {pendingChores.length > 0 && (
@@ -460,11 +458,11 @@ function KidDashboardContent({
       {/* Recent Activity */}
       {recentCompleted.length > 0 && (
         <section>
-          <h2 className="mb-4 flex items-center gap-2 text-xl font-bold text-purple-900">
-            <Star className="h-5 w-5" />
-            Nedávné výdělky
-            <TTSButton text="Nedávné výdělky" language={ttsLanguage} />
-          </h2>
+          <KidSectionHeader
+            icon={<Star className="h-5 w-5" />}
+            text="Nedávné výdělky"
+            ttsLanguage={ttsLanguage}
+          />
 
           <div className="space-y-2">
             {recentCompleted.map((chore) => {

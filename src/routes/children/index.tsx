@@ -7,8 +7,6 @@ import { AuthGuard } from '@/components/auth/AuthGuard'
 import { ParentLayout } from '@/components/layout/ParentLayout'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { EmptyState } from '@/components/ui/empty-state'
 import {
   Dialog,
@@ -20,6 +18,11 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { Money } from '@/components/ui/money'
+import { LoadingSpinner } from '@/components/feedback/LoadingSpinner'
+import { PageHeader } from '@/components/page/PageHeader'
+import { FormField } from '@/components/forms/FormField'
+import { AVATAR_EMOJIS, EmojiPicker } from '@/components/forms/EmojiPicker'
+import { ConfirmDeleteDialog } from '@/components/dialogs/ConfirmDeleteDialog'
 
 export const Route = createFileRoute('/children/')({
   component: ChildrenPage,
@@ -34,8 +37,6 @@ function ChildrenPage() {
     </AuthGuard>
   )
 }
-
-const EMOJI_OPTIONS = ['👦', '👧', '🧒', '👶', '🐱', '🐶', '🦊', '🐻', '🐼', '🐨', '🦁', '🐯']
 
 function ChildrenContent() {
   const children = useQuery(api.children.list)
@@ -54,13 +55,17 @@ function ChildrenContent() {
 
   const currency = settings?.currency ?? '$'
 
+  const resetForm = () => {
+    setName('')
+    setEmoji('👦')
+  }
+
   const handleAdd = async () => {
     if (!name.trim()) return
     setIsSubmitting(true)
     try {
       await createChild({ name: name.trim(), avatarEmoji: emoji })
-      setName('')
-      setEmoji('👦')
+      resetForm()
       setIsAddOpen(false)
     } finally {
       setIsSubmitting(false)
@@ -71,10 +76,9 @@ function ChildrenContent() {
     if (!name.trim()) return
     setIsSubmitting(true)
     try {
-      await updateChild({ id: childId as any, name: name.trim(), avatarEmoji: emoji })
+      await updateChild({ id: childId as never, name: name.trim(), avatarEmoji: emoji })
       setEditingChild(null)
-      setName('')
-      setEmoji('👦')
+      resetForm()
     } finally {
       setIsSubmitting(false)
     }
@@ -83,7 +87,7 @@ function ChildrenContent() {
   const handleDelete = async (childId: string) => {
     setIsSubmitting(true)
     try {
-      await removeChild({ id: childId as any })
+      await removeChild({ id: childId as never })
       setDeletingChild(null)
     } finally {
       setIsSubmitting(false)
@@ -97,76 +101,61 @@ function ChildrenContent() {
   }
 
   if (children === undefined) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-      </div>
-    )
+    return <LoadingSpinner className="py-12" />
   }
+
+  const deletingChildData = children.find((c) => c._id === deletingChild)
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Children</h1>
-          <p className="text-muted-foreground">Manage your children</p>
-        </div>
-
-        <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              Add Child
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Add Child</DialogTitle>
-              <DialogDescription>
-                Add a new child to track their chores
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Name</Label>
-                <Input
+      <PageHeader
+        title="Children"
+        description="Manage your children"
+        action={
+          <Dialog open={isAddOpen} onOpenChange={(open) => {
+            if (!open) resetForm()
+            setIsAddOpen(open)
+          }}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                Add Child
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Add Child</DialogTitle>
+                <DialogDescription>
+                  Add a new child to track their chores
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <FormField
+                  label="Name"
                   id="name"
                   value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  onChange={setName}
                   placeholder="Enter child's name"
                 />
+                <EmojiPicker
+                  label="Avatar"
+                  options={AVATAR_EMOJIS}
+                  value={emoji}
+                  onChange={setEmoji}
+                />
               </div>
-              <div className="space-y-2">
-                <Label>Avatar</Label>
-                <div className="flex flex-wrap gap-2">
-                  {EMOJI_OPTIONS.map((e) => (
-                    <button
-                      key={e}
-                      type="button"
-                      onClick={() => setEmoji(e)}
-                      className={`flex h-10 w-10 items-center justify-center rounded-lg text-xl transition-colors ${
-                        emoji === e
-                          ? 'bg-primary text-primary-foreground'
-                          : 'bg-muted hover:bg-muted/80'
-                      }`}
-                    >
-                      {e}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsAddOpen(false)}>
-                Cancel
-              </Button>
-              <Button onClick={handleAdd} disabled={!name.trim() || isSubmitting}>
-                {isSubmitting ? 'Adding...' : 'Add Child'}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setIsAddOpen(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={handleAdd} disabled={!name.trim() || isSubmitting}>
+                  {isSubmitting ? 'Adding...' : 'Add Child'}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        }
+      />
 
       {children.length === 0 ? (
         <EmptyState
@@ -210,8 +199,7 @@ function ChildrenContent() {
                     onOpenChange={(open) => {
                       if (!open) {
                         setEditingChild(null)
-                        setName('')
-                        setEmoji('👦')
+                        resetForm()
                       }
                     }}
                   >
@@ -232,33 +220,18 @@ function ChildrenContent() {
                         </DialogDescription>
                       </DialogHeader>
                       <div className="space-y-4 py-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="editName">Name</Label>
-                          <Input
-                            id="editName"
-                            value={name}
-                            onChange={(e) => setName(e.target.value)}
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label>Avatar</Label>
-                          <div className="flex flex-wrap gap-2">
-                            {EMOJI_OPTIONS.map((e) => (
-                              <button
-                                key={e}
-                                type="button"
-                                onClick={() => setEmoji(e)}
-                                className={`flex h-10 w-10 items-center justify-center rounded-lg text-xl transition-colors ${
-                                  emoji === e
-                                    ? 'bg-primary text-primary-foreground'
-                                    : 'bg-muted hover:bg-muted/80'
-                                }`}
-                              >
-                                {e}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
+                        <FormField
+                          label="Name"
+                          id="editName"
+                          value={name}
+                          onChange={setName}
+                        />
+                        <EmojiPicker
+                          label="Avatar"
+                          options={AVATAR_EMOJIS}
+                          value={emoji}
+                          onChange={setEmoji}
+                        />
                       </div>
                       <DialogFooter>
                         <Button
@@ -276,50 +249,28 @@ function ChildrenContent() {
                       </DialogFooter>
                     </DialogContent>
                   </Dialog>
-                  <Dialog
-                    open={deletingChild === child._id}
-                    onOpenChange={(open) => !open && setDeletingChild(null)}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setDeletingChild(child._id)}
                   >
-                    <DialogTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => setDeletingChild(child._id)}
-                      >
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>Delete Child</DialogTitle>
-                        <DialogDescription>
-                          Are you sure you want to delete {child.name}? This action
-                          cannot be undone.
-                        </DialogDescription>
-                      </DialogHeader>
-                      <DialogFooter>
-                        <Button
-                          variant="outline"
-                          onClick={() => setDeletingChild(null)}
-                        >
-                          Cancel
-                        </Button>
-                        <Button
-                          variant="destructive"
-                          onClick={() => handleDelete(child._id)}
-                          disabled={isSubmitting}
-                        >
-                          {isSubmitting ? 'Deleting...' : 'Delete'}
-                        </Button>
-                      </DialogFooter>
-                    </DialogContent>
-                  </Dialog>
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                  </Button>
                 </div>
               </CardContent>
             </Card>
           ))}
         </div>
       )}
+
+      <ConfirmDeleteDialog
+        open={deletingChild !== null}
+        onClose={() => setDeletingChild(null)}
+        onConfirm={() => deletingChild && handleDelete(deletingChild)}
+        itemName={deletingChildData?.name ?? ''}
+        itemType="Child"
+        isLoading={isSubmitting}
+      />
     </div>
   )
 }

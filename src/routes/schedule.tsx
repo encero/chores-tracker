@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useState } from 'react'
 import { useMutation, useQuery } from 'convex/react'
-import { Calendar, ChevronDown, Pause, Pencil, Play, Plus, Sparkles, Trash2, Users } from 'lucide-react'
+import { Calendar, Pause, Pencil, Play, Plus, Sparkles, Trash2, Users } from 'lucide-react'
 import { api } from '../../convex/_generated/api'
 import type { Id } from '../../convex/_generated/dataModel'
 import { AuthGuard } from '@/components/auth/AuthGuard'
@@ -30,6 +30,15 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Money } from '@/components/ui/money'
+import { LoadingSpinner } from '@/components/feedback/LoadingSpinner'
+import { PageHeader } from '@/components/page/PageHeader'
+import { LoadMoreButton } from '@/components/page/LoadMoreButton'
+import { ChildSelectPills } from '@/components/forms/ChildSelectPills'
+import { SwitchField } from '@/components/forms/SwitchField'
+import { ChoreTemplateSelect } from '@/components/forms/ChoreTemplateSelect'
+import { RewardInput } from '@/components/forms/RewardInput'
+import { DAYS_OF_WEEK, DayOfWeekPicker } from '@/components/forms/DayOfWeekPicker'
+import { ConfirmDeleteDialog } from '@/components/dialogs/ConfirmDeleteDialog'
 
 const ITEMS_PER_PAGE = 15
 
@@ -46,16 +55,6 @@ function SchedulePage() {
     </AuthGuard>
   )
 }
-
-const DAYS_OF_WEEK = [
-  { value: 0, label: 'Sun' },
-  { value: 1, label: 'Mon' },
-  { value: 2, label: 'Tue' },
-  { value: 3, label: 'Wed' },
-  { value: 4, label: 'Thu' },
-  { value: 5, label: 'Fri' },
-  { value: 6, label: 'Sat' },
-]
 
 function ScheduleContent() {
   const [limit, setLimit] = useState(ITEMS_PER_PAGE)
@@ -202,248 +201,193 @@ function ScheduleContent() {
   }
 
   if (schedulesResult === undefined || templatesResult === undefined || children === undefined) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-      </div>
-    )
+    return <LoadingSpinner className="py-12" />
   }
+
+  const deletingSchedule = schedules?.find((s) => s._id === deletingId)
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Schedule</h1>
-          <p className="text-muted-foreground">
-            Manage recurring chore assignments
-          </p>
-        </div>
-
-        <Dialog open={isAddOpen} onOpenChange={(open) => {
-          if (!open) resetForm()
-          setIsAddOpen(open)
-        }}>
-          <DialogTrigger asChild>
-            <Button disabled={templates === undefined || templates.length === 0 || children.length === 0}>
-              <Plus className="mr-2 h-4 w-4" />
-              Assign Chore
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-lg">
-            <DialogHeader>
-              <DialogTitle>Assign Chore</DialogTitle>
-              <DialogDescription>
-                Schedule a chore for one or more children
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4 py-4 max-h-[60vh] overflow-y-auto">
-              {/* Optional Chore Toggle */}
-              <div className="flex items-center justify-between rounded-lg border p-3 bg-amber-50/50">
-                <div className="space-y-0.5">
-                  <Label htmlFor="optional" className="flex items-center gap-2">
-                    <Sparkles className="h-4 w-4 text-amber-500" />
-                    Optional Chore
-                  </Label>
-                  <p className="text-sm text-muted-foreground">
-                    Any child can pick up this chore for extra earnings
-                  </p>
-                </div>
-                <Switch
-                  id="optional"
-                  checked={isOptional}
-                  onCheckedChange={(checked) => {
-                    setIsOptional(checked)
-                    if (checked) {
-                      setIsJoined(false)
-                      setSelectedChildren([])
-                    }
-                  }}
-                />
-              </div>
-
-              {/* Max Pickups (for optional chores) */}
-              {isOptional && (
-                <div className="space-y-2">
-                  <Label htmlFor="maxPickups">Max Pickups Per Period (optional)</Label>
-                  <Input
-                    id="maxPickups"
-                    type="number"
-                    min="1"
-                    value={maxPickupsPerPeriod}
-                    onChange={(e) => setMaxPickupsPerPeriod(e.target.value)}
-                    placeholder="Unlimited"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Leave empty for unlimited. Period is based on frequency (daily = per day, weekly = per week).
-                  </p>
-                </div>
-              )}
-
-              {/* Select Children */}
-              {!isOptional && (
-                <div className="space-y-2">
-                  <Label>Assign to</Label>
-                  <div className="flex flex-wrap gap-2">
-                    {children.map((child) => (
-                      <button
-                        key={child._id}
-                        type="button"
-                        onClick={() => toggleChild(child._id)}
-                        className={`flex items-center gap-2 rounded-full px-3 py-1.5 text-sm transition-colors ${
-                          selectedChildren.includes(child._id)
-                            ? 'bg-primary text-primary-foreground'
-                            : 'bg-muted hover:bg-muted/80'
-                        }`}
-                      >
-                        <span>{child.avatarEmoji}</span>
-                        <span>{child.name}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Joined Chore Toggle */}
-              {!isOptional && selectedChildren.length > 1 && (
-                <div className="flex items-center justify-between rounded-lg border p-3">
+      <PageHeader
+        title="Schedule"
+        description="Manage recurring chore assignments"
+        action={
+          <Dialog open={isAddOpen} onOpenChange={(open) => {
+            if (!open) resetForm()
+            setIsAddOpen(open)
+          }}>
+            <DialogTrigger asChild>
+              <Button disabled={templates === undefined || templates.length === 0 || children.length === 0}>
+                <Plus className="mr-2 h-4 w-4" />
+                Assign Chore
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-lg">
+              <DialogHeader>
+                <DialogTitle>Assign Chore</DialogTitle>
+                <DialogDescription>
+                  Schedule a chore for one or more children
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-4 max-h-[60vh] overflow-y-auto">
+                {/* Optional Chore Toggle */}
+                <div className="flex items-center justify-between rounded-lg border p-3 bg-amber-50/50">
                   <div className="space-y-0.5">
-                    <Label htmlFor="joined">Joined Chore</Label>
+                    <Label htmlFor="optional" className="flex items-center gap-2">
+                      <Sparkles className="h-4 w-4 text-amber-500" />
+                      Optional Chore
+                    </Label>
                     <p className="text-sm text-muted-foreground">
-                      Children work together, reward is split by effort
+                      Any child can pick up this chore for extra earnings
                     </p>
                   </div>
                   <Switch
+                    id="optional"
+                    checked={isOptional}
+                    onCheckedChange={(checked) => {
+                      setIsOptional(checked)
+                      if (checked) {
+                        setIsJoined(false)
+                        setSelectedChildren([])
+                      }
+                    }}
+                  />
+                </div>
+
+                {/* Max Pickups (for optional chores) */}
+                {isOptional && (
+                  <div className="space-y-2">
+                    <Label htmlFor="maxPickups">Max Pickups Per Period (optional)</Label>
+                    <Input
+                      id="maxPickups"
+                      type="number"
+                      min="1"
+                      value={maxPickupsPerPeriod}
+                      onChange={(e) => setMaxPickupsPerPeriod(e.target.value)}
+                      placeholder="Unlimited"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Leave empty for unlimited. Period is based on frequency (daily = per day, weekly = per week).
+                    </p>
+                  </div>
+                )}
+
+                {/* Select Children */}
+                {!isOptional && (
+                  <ChildSelectPills
+                    label="Assign to"
+                    children={children}
+                    selected={selectedChildren}
+                    onToggle={toggleChild}
+                  />
+                )}
+
+                {/* Joined Chore Toggle */}
+                {!isOptional && selectedChildren.length > 1 && (
+                  <SwitchField
                     id="joined"
+                    label="Joined Chore"
+                    description="Children work together, reward is split by effort"
                     checked={isJoined}
                     onCheckedChange={setIsJoined}
                   />
-                </div>
-              )}
-
-              {/* Select Template */}
-              <div className="space-y-2">
-                <Label>Chore</Label>
-                <Select value={selectedTemplate} onValueChange={handleTemplateChange}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a chore" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {templates !== undefined && templates.map((template) => (
-                      <SelectItem key={template._id} value={template._id}>
-                        {template.icon} {template.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Reward */}
-              <div className="space-y-2">
-                <Label htmlFor="reward">
-                  {isJoined ? 'Total Reward' : 'Reward'} ({currency})
-                </Label>
-                <Input
-                  id="reward"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={reward}
-                  onChange={(e) => setReward(e.target.value)}
-                  placeholder="0.00"
-                />
-                {isJoined && (
-                  <p className="text-xs text-muted-foreground">
-                    This total will be split among participants based on effort
-                  </p>
                 )}
-              </div>
 
-              {/* Schedule Type */}
-              <div className="space-y-2">
-                <Label>Frequency</Label>
-                <Select
-                  value={scheduleType}
-                  onValueChange={(v) => setScheduleType(v as typeof scheduleType)}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="once">One Time</SelectItem>
-                    <SelectItem value="daily">Daily</SelectItem>
-                    <SelectItem value="weekly">Weekly</SelectItem>
-                    <SelectItem value="custom">Custom Days</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Custom Days */}
-              {scheduleType === 'custom' && (
-                <div className="space-y-2">
-                  <Label>Days of Week</Label>
-                  <div className="flex flex-wrap gap-1">
-                    {DAYS_OF_WEEK.map((day) => (
-                      <button
-                        key={day.value}
-                        type="button"
-                        onClick={() => toggleDay(day.value)}
-                        className={`flex h-10 w-10 items-center justify-center rounded-lg text-sm font-medium transition-colors ${
-                          scheduleDays.includes(day.value)
-                            ? 'bg-primary text-primary-foreground'
-                            : 'bg-muted hover:bg-muted/80'
-                        }`}
-                      >
-                        {day.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Start Date */}
-              <div className="space-y-2">
-                <Label htmlFor="startDate">Start Date</Label>
-                <Input
-                  id="startDate"
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
+                {/* Select Template */}
+                <ChoreTemplateSelect
+                  templates={templates}
+                  value={selectedTemplate}
+                  onChange={handleTemplateChange}
                 />
-              </div>
 
-              {/* End Date */}
-              {scheduleType !== 'once' && (
+                {/* Reward */}
                 <div className="space-y-2">
-                  <Label htmlFor="endDate">End Date (optional)</Label>
+                  <RewardInput
+                    value={reward}
+                    onChange={setReward}
+                    currency={currency}
+                    isTotal={isJoined}
+                  />
+                  {isJoined && (
+                    <p className="text-xs text-muted-foreground">
+                      This total will be split among participants based on effort
+                    </p>
+                  )}
+                </div>
+
+                {/* Schedule Type */}
+                <div className="space-y-2">
+                  <Label>Frequency</Label>
+                  <Select
+                    value={scheduleType}
+                    onValueChange={(v) => setScheduleType(v as typeof scheduleType)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="once">One Time</SelectItem>
+                      <SelectItem value="daily">Daily</SelectItem>
+                      <SelectItem value="weekly">Weekly</SelectItem>
+                      <SelectItem value="custom">Custom Days</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Custom Days */}
+                {scheduleType === 'custom' && (
+                  <DayOfWeekPicker
+                    label="Days of Week"
+                    selected={scheduleDays}
+                    onToggle={toggleDay}
+                  />
+                )}
+
+                {/* Start Date */}
+                <div className="space-y-2">
+                  <Label htmlFor="startDate">Start Date</Label>
                   <Input
-                    id="endDate"
+                    id="startDate"
                     type="date"
-                    value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
-                    min={startDate}
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
                   />
                 </div>
-              )}
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsAddOpen(false)}>
-                Cancel
-              </Button>
-              <Button
-                onClick={handleAdd}
-                disabled={
-                  !selectedTemplate ||
-                  (!isOptional && selectedChildren.length === 0) ||
-                  (scheduleType === 'custom' && scheduleDays.length === 0) ||
-                  isSubmitting
-                }
-              >
-                {isSubmitting ? 'Scheduling...' : 'Schedule'}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </div>
+
+                {/* End Date */}
+                {scheduleType !== 'once' && (
+                  <div className="space-y-2">
+                    <Label htmlFor="endDate">End Date (optional)</Label>
+                    <Input
+                      id="endDate"
+                      type="date"
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                      min={startDate}
+                    />
+                  </div>
+                )}
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setIsAddOpen(false)}>
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleAdd}
+                  disabled={
+                    !selectedTemplate ||
+                    (!isOptional && selectedChildren.length === 0) ||
+                    (scheduleType === 'custom' && scheduleDays.length === 0) ||
+                    isSubmitting
+                  }
+                >
+                  {isSubmitting ? 'Scheduling...' : 'Schedule'}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        }
+      />
 
       {!templates || templates.length === 0 || children.length === 0 ? (
         <EmptyState
@@ -601,56 +545,21 @@ function ScheduleContent() {
                       <Play className="h-4 w-4" />
                     )}
                   </Button>
-                  <Dialog
-                    open={deletingId === schedule._id}
-                    onOpenChange={(open) => !open && setDeletingId(null)}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setDeletingId(schedule._id)}
                   >
-                    <DialogTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => setDeletingId(schedule._id)}
-                      >
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>Delete Schedule</DialogTitle>
-                        <DialogDescription>
-                          Are you sure you want to delete this scheduled chore? All
-                          related instances will also be deleted.
-                        </DialogDescription>
-                      </DialogHeader>
-                      <DialogFooter>
-                        <Button variant="outline" onClick={() => setDeletingId(null)}>
-                          Cancel
-                        </Button>
-                        <Button
-                          variant="destructive"
-                          onClick={() => handleDelete(schedule._id)}
-                          disabled={isSubmitting}
-                        >
-                          {isSubmitting ? 'Deleting...' : 'Delete'}
-                        </Button>
-                      </DialogFooter>
-                    </DialogContent>
-                  </Dialog>
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                  </Button>
                 </div>
               </CardContent>
             </Card>
           ))}
-          {hasMore && (
-            <div className="flex justify-center pt-2">
-              <Button
-                variant="outline"
-                onClick={() => setLimit((prev) => prev + ITEMS_PER_PAGE)}
-              >
-                <ChevronDown className="mr-2 h-4 w-4" />
-                Load More
-              </Button>
-            </div>
-          )}
+          <LoadMoreButton
+            hasMore={hasMore}
+            onLoadMore={() => setLimit((prev) => prev + ITEMS_PER_PAGE)}
+          />
         </div>
       )}
 
@@ -730,60 +639,32 @@ function ScheduleContent() {
 
             {/* Select Children */}
             {!isOptional && (
-              <div className="space-y-2">
-                <Label>Assign to</Label>
-                <div className="flex flex-wrap gap-2">
-                  {children.map((child) => (
-                    <button
-                      key={child._id}
-                      type="button"
-                      onClick={() => toggleChild(child._id)}
-                      className={`flex items-center gap-2 rounded-full px-3 py-1.5 text-sm transition-colors ${
-                        selectedChildren.includes(child._id)
-                          ? 'bg-primary text-primary-foreground'
-                          : 'bg-muted hover:bg-muted/80'
-                      }`}
-                    >
-                      <span>{child.avatarEmoji}</span>
-                      <span>{child.name}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
+              <ChildSelectPills
+                label="Assign to"
+                children={children}
+                selected={selectedChildren}
+                onToggle={toggleChild}
+              />
             )}
 
             {/* Joined Chore Toggle */}
             {!isOptional && selectedChildren.length > 1 && (
-              <div className="flex items-center justify-between rounded-lg border p-3">
-                <div className="space-y-0.5">
-                  <Label htmlFor="edit-joined">Joined Chore</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Children work together, reward is split by effort
-                  </p>
-                </div>
-                <Switch
-                  id="edit-joined"
-                  checked={isJoined}
-                  onCheckedChange={setIsJoined}
-                />
-              </div>
+              <SwitchField
+                id="edit-joined"
+                label="Joined Chore"
+                description="Children work together, reward is split by effort"
+                checked={isJoined}
+                onCheckedChange={setIsJoined}
+              />
             )}
 
             {/* Reward */}
-            <div className="space-y-2">
-              <Label htmlFor="edit-reward">
-                {isJoined ? 'Total Reward' : 'Reward'} ({currency})
-              </Label>
-              <Input
-                id="edit-reward"
-                type="number"
-                step="0.01"
-                min="0"
-                value={reward}
-                onChange={(e) => setReward(e.target.value)}
-                placeholder="0.00"
-              />
-            </div>
+            <RewardInput
+              value={reward}
+              onChange={setReward}
+              currency={currency}
+              isTotal={isJoined}
+            />
 
             {/* Schedule Type */}
             <div className="space-y-2">
@@ -806,25 +687,11 @@ function ScheduleContent() {
 
             {/* Custom Days */}
             {scheduleType === 'custom' && (
-              <div className="space-y-2">
-                <Label>Days of Week</Label>
-                <div className="flex flex-wrap gap-1">
-                  {DAYS_OF_WEEK.map((day) => (
-                    <button
-                      key={day.value}
-                      type="button"
-                      onClick={() => toggleDay(day.value)}
-                      className={`flex h-10 w-10 items-center justify-center rounded-lg text-sm font-medium transition-colors ${
-                        scheduleDays.includes(day.value)
-                          ? 'bg-primary text-primary-foreground'
-                          : 'bg-muted hover:bg-muted/80'
-                      }`}
-                    >
-                      {day.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
+              <DayOfWeekPicker
+                label="Days of Week"
+                selected={scheduleDays}
+                onToggle={toggleDay}
+              />
             )}
 
             {/* End Date */}
@@ -864,6 +731,15 @@ function ScheduleContent() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <ConfirmDeleteDialog
+        open={deletingId !== null}
+        onClose={() => setDeletingId(null)}
+        onConfirm={() => deletingId && handleDelete(deletingId)}
+        itemName={deletingSchedule?.template?.name ?? 'this schedule'}
+        itemType="Schedule"
+        isLoading={isSubmitting}
+      />
     </div>
   )
 }
