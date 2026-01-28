@@ -180,18 +180,6 @@ function ChildDetailContent() {
           </div>
           <div className="flex-1 min-w-0">
             <h1 className="text-2xl sm:text-3xl font-bold">{child.name}</h1>
-            <div className="mt-1 flex flex-wrap items-center gap-2 sm:gap-4 text-sm text-muted-foreground">
-              <span>
-                Access code: <strong>{child.accessCode}</strong>
-              </span>
-              <Button variant="ghost" size="sm" onClick={handleRegenerateCode}>
-                <RefreshCw className="mr-1 h-3 w-3" />
-                Regenerate
-              </Button>
-            </div>
-            <p className="mt-1 text-sm text-muted-foreground break-all">
-              Kid URL: <code className="bg-muted px-1 rounded">/kid/{child.accessCode}</code>
-            </p>
           </div>
           <div className="w-full sm:w-auto sm:text-right">
             <p className="text-sm text-muted-foreground">Balance</p>

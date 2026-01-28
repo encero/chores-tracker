@@ -326,9 +326,6 @@ function DashboardContent() {
                       </div>
                       <div className="flex-1">
                         <CardTitle className="text-lg">{child.name}</CardTitle>
-                        <p className="text-sm text-muted-foreground">
-                          Code: {child.accessCode}
-                        </p>
                       </div>
                     </CardHeader>
                     <CardContent>
@@ -457,6 +454,7 @@ function DashboardContent() {
                             </Button>
                           )
                         })}
+                        {doneCount === 0 && (
                         <Button
                           variant="outline"
                           size="sm"
@@ -470,7 +468,7 @@ function DashboardContent() {
                             <Ban className="mr-1 h-4 w-4" />
                           )}
                           Mark as Missed
-                        </Button>
+                        </Button>)}
                       </div>
                     )}
                   </CardContent>
