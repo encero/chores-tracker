@@ -104,6 +104,7 @@ function DashboardContent() {
         isJoined: isJoined && selectedChildren.length > 1,
         scheduleType: 'once',
         startDate: today,
+        isOptional: false,
       })
       resetQuickAssign()
       setQuickAssignOpen(false)

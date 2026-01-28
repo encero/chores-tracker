@@ -119,7 +119,7 @@ export const create = mutation({
     choreTemplateId: v.id('choreTemplates'),
     reward: v.number(),
     isJoined: v.boolean(),
-    isOptional: v.optional(v.boolean()),
+    isOptional: v.boolean(),
     maxPickupsPerPeriod: v.optional(v.number()),
     scheduleType: v.union(
       v.literal('once'),

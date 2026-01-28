@@ -38,7 +38,7 @@ export default defineSchema({
     choreTemplateId: v.id('choreTemplates'), // Reference to chore template
     reward: v.number(), // Total reward for this chore (cents, can override template)
     isJoined: v.boolean(), // True if this is a joined chore (reward split by effort)
-    isOptional: v.optional(v.boolean()), // True if kids can pick up this chore themselves
+    isOptional: v.boolean(), // True if kids can pick up this chore themselves
     maxPickupsPerPeriod: v.optional(v.number()), // Max times each child can pick up per period (null = unlimited)
     scheduleType: v.union(
       v.literal('once'),
