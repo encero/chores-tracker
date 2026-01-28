@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useState } from 'react'
 import { useMutation, useQuery } from 'convex/react'
-import { Check, CheckCircle2, ChevronDown, ClipboardCheck, Settings2, Star, ThumbsDown, ThumbsUp, Undo2, Users, X } from 'lucide-react'
+import { CheckCircle2, ChevronDown, ClipboardCheck, Settings2, Star, ThumbsDown, ThumbsUp, Undo2, Users, X } from 'lucide-react'
 import { api } from '../../convex/_generated/api'
 import type { Id } from '../../convex/_generated/dataModel'
 import type {QualityRating} from '@/lib/currency';
@@ -403,7 +403,7 @@ function ReviewContent() {
                                     <Undo2 className="h-4 w-4" />
                                   )}
                                 </Button>
-                                {true && (
+                                {isJoined && (
                                   <Button
                                     variant="ghost"
                                     size="sm"

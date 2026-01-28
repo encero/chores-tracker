@@ -1,7 +1,7 @@
 import { Link, createFileRoute } from '@tanstack/react-router'
 import { useState } from 'react'
 import { useMutation, useQuery } from 'convex/react'
-import { ArrowLeft, ChevronDown, ClipboardCheck, History, Minus, PenLine, Plus, RefreshCw, Settings2, Wallet } from 'lucide-react'
+import { ArrowLeft, ChevronDown, ClipboardCheck, History, Minus, PenLine, Plus, Settings2, Wallet } from 'lucide-react'
 import { api } from '../../../convex/_generated/api'
 import type { Id } from '../../../convex/_generated/dataModel'
 import { AuthGuard } from '@/components/auth/AuthGuard'
@@ -64,7 +64,6 @@ function ChildDetailContent() {
 
   const createWithdrawal = useMutation(api.withdrawals.create)
   const adjustBalance = useMutation(api.children.adjustBalance)
-  const regenerateCode = useMutation(api.children.regenerateAccessCode)
 
   const [isWithdrawOpen, setIsWithdrawOpen] = useState(false)
   const [withdrawAmount, setWithdrawAmount] = useState('')
@@ -118,12 +117,6 @@ function ChildDetailContent() {
       setWithdrawNote('')
     } finally {
       setIsSubmitting(false)
-    }
-  }
-
-  const handleRegenerateCode = async () => {
-    if (confirm('Are you sure you want to regenerate the access code? The old code will stop working.')) {
-      await regenerateCode({ id: child._id })
     }
   }
 
