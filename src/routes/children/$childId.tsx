@@ -1,7 +1,7 @@
 import { Link, createFileRoute } from '@tanstack/react-router'
 import { useState } from 'react'
 import { useMutation, useQuery } from 'convex/react'
-import { ArrowLeft, ChevronDown, ClipboardCheck, History, Minus, PenLine, Plus, RefreshCw, Settings2, Wallet } from 'lucide-react'
+import { ArrowLeft, ChevronDown, ClipboardCheck, History, Minus, PenLine, Plus, Settings2, Wallet } from 'lucide-react'
 import { api } from '../../../convex/_generated/api'
 import type { Id } from '../../../convex/_generated/dataModel'
 import { AuthGuard } from '@/components/auth/AuthGuard'
@@ -64,7 +64,6 @@ function ChildDetailContent() {
 
   const createWithdrawal = useMutation(api.withdrawals.create)
   const adjustBalance = useMutation(api.children.adjustBalance)
-  const regenerateCode = useMutation(api.children.regenerateAccessCode)
 
   const [isWithdrawOpen, setIsWithdrawOpen] = useState(false)
   const [withdrawAmount, setWithdrawAmount] = useState('')
@@ -121,12 +120,6 @@ function ChildDetailContent() {
     }
   }
 
-  const handleRegenerateCode = async () => {
-    if (confirm('Are you sure you want to regenerate the access code? The old code will stop working.')) {
-      await regenerateCode({ id: child._id })
-    }
-  }
-
   const handleAdjust = async () => {
     const amount = Math.round(parseFloat(adjustAmount) * 100)
     if (isNaN(amount) || amount < 0) return
@@ -180,18 +173,6 @@ function ChildDetailContent() {
           </div>
           <div className="flex-1 min-w-0">
             <h1 className="text-2xl sm:text-3xl font-bold">{child.name}</h1>
-            <div className="mt-1 flex flex-wrap items-center gap-2 sm:gap-4 text-sm text-muted-foreground">
-              <span>
-                Access code: <strong>{child.accessCode}</strong>
-              </span>
-              <Button variant="ghost" size="sm" onClick={handleRegenerateCode}>
-                <RefreshCw className="mr-1 h-3 w-3" />
-                Regenerate
-              </Button>
-            </div>
-            <p className="mt-1 text-sm text-muted-foreground break-all">
-              Kid URL: <code className="bg-muted px-1 rounded">/kid/{child.accessCode}</code>
-            </p>
           </div>
           <div className="w-full sm:w-auto sm:text-right">
             <p className="text-sm text-muted-foreground">Balance</p>

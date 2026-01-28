@@ -190,9 +190,6 @@ function ChildrenContent() {
                 </div>
                 <div className="flex-1">
                   <CardTitle>{child.name}</CardTitle>
-                  <p className="text-sm text-muted-foreground">
-                    Access code: <strong>{child.accessCode}</strong>
-                  </p>
                 </div>
               </CardHeader>
               <CardContent>

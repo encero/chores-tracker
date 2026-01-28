@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useState } from 'react'
 import { useMutation, useQuery } from 'convex/react'
-import { Check, CheckCircle2, ChevronDown, ClipboardCheck, Settings2, Star, ThumbsDown, ThumbsUp, Undo2, Users, X } from 'lucide-react'
+import { CheckCircle2, ChevronDown, ClipboardCheck, Settings2, Star, ThumbsDown, ThumbsUp, Undo2, Users, X } from 'lucide-react'
 import { api } from '../../convex/_generated/api'
 import type { Id } from '../../convex/_generated/dataModel'
 import type {QualityRating} from '@/lib/currency';
@@ -292,28 +292,6 @@ function ReviewContent() {
                             Joined
                           </Badge>
                         )}
-                        {isMultiKid && !isJoined && (
-                          <Badge variant="outline">
-                            <Users className="mr-1 h-3 w-3" />
-                            {chore.participants.length} kids
-                          </Badge>
-                        )}
-                      </div>
-
-                      <div className="mt-1 flex flex-wrap items-center gap-2 text-sm">
-                        {chore.participants.map((p) => (
-                          <span
-                            key={p.childId}
-                            className={`flex items-center gap-1 ${
-                              p.status === 'done'
-                                ? 'text-green-600'
-                                : 'text-muted-foreground'
-                            }`}
-                          >
-                            {p.child?.avatarEmoji} {p.child?.name}
-                            {p.status === 'done' && <Check className="h-3 w-3" />}
-                          </span>
-                        ))}
                       </div>
 
                       {isMultiKid && (
@@ -329,9 +307,8 @@ function ReviewContent() {
                           </p>
                         </div>
                       )}
-
-                      <p className="mt-2 text-sm text-muted-foreground">
-                        Due: {chore.dueDate}
+                      <p className="text-sm text-muted-foreground">
+                        {chore.dueDate}
                       </p>
                     </div>
 
@@ -348,7 +325,6 @@ function ReviewContent() {
                   </div>
 
                   {/* Rating Buttons */}
-                  {/* Unified participant-based rating UI */}
                   <div className="mt-4 space-y-3">
                     {isMultiKid && chore.participants.every(p => p.status === 'done') && !chore.participants.some(p => p.quality) && (
                       <div className="flex justify-end">
@@ -366,13 +342,12 @@ function ReviewContent() {
                       const isRating = ratingChildId === p.childId
                       const alreadyRated = !!p.quality
                       const numParticipants = chore.participants.length
-                      const isCustomEffort = isJoined && customEffortChild?.choreId === chore._id && customEffortChild.childId === p.childId
+                      // const isCustomEffort = isJoined && customEffortChild?.choreId === chore._id && customEffortChild.childId === p.childId
+                      const isCustomEffort = customEffortChild?.choreId === chore._id && customEffortChild.childId === p.childId
                       // For joined: reward is split by effort. For non-joined: full reward per kid
-                      const baseReward = isJoined
-                        ? (isCustomEffort
+                      const baseReward = isCustomEffort
                             ? chore.totalReward * (customEffortValue / 100)
-                            : chore.totalReward / numParticipants)
-                        : chore.totalReward
+                            : chore.totalReward / numParticipants
 
                       return (
                         <div
@@ -381,7 +356,7 @@ function ReviewContent() {
                             alreadyRated ? 'bg-green-50 border-green-200' : ''
                           }`}
                         >
-                          <div className="flex items-center gap-3 p-3">
+                          <div className="flex flex-wrap items-center gap-3 p-3">
                             <div className="flex items-center gap-2 flex-1">
                               <span className="text-xl">{p.child?.avatarEmoji}</span>
                               <span className="font-medium">{p.child?.name}</span>
@@ -413,7 +388,7 @@ function ReviewContent() {
                                 />
                               </div>
                             ) : p.status === 'done' ? (
-                              <div className="flex flex-wrap items-center gap-1">
+                              <div className="flex flex-wrap items-center gap-1 grow justify-end">
                                 <Button
                                   variant="ghost"
                                   size="sm"
@@ -463,14 +438,8 @@ function ReviewContent() {
                                   onClick={() => handleRateParticipant(chore._id, p.childId, 'bad', isCustomEffort ? customEffortValue : undefined)}
                                   disabled={isRating}
                                 >
-                                  {isRating ? (
-                                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                                  ) : (
-                                    <>
                                       <ThumbsDown className="h-3 w-3" />
-                                      <span className="ml-1 text-xs hidden sm:inline"><Money cents={Math.round(baseReward * 0.5)} currency={currency} /></span>
-                                    </>
-                                  )}
+                                      <span className="ml-1 text-xs"><Money cents={Math.round(baseReward * 0.5)} currency={currency} /></span>
                                 </Button>
                                 <Button
                                   variant="outline"
@@ -480,7 +449,7 @@ function ReviewContent() {
                                   disabled={isRating}
                                 >
                                   <ThumbsUp className="h-3 w-3" />
-                                  <span className="ml-1 text-xs hidden sm:inline"><Money cents={Math.round(baseReward)} currency={currency} /></span>
+                                  <span className="ml-1 text-xs"><Money cents={Math.round(baseReward)} currency={currency} /></span>
                                 </Button>
                                 <Button
                                   variant="outline"
@@ -490,7 +459,7 @@ function ReviewContent() {
                                   disabled={isRating}
                                 >
                                   <Star className="h-3 w-3" />
-                                  <span className="ml-1 text-xs hidden sm:inline"><Money cents={Math.round(baseReward * 1.25)} currency={currency} /></span>
+                                  <span className="ml-1 text-xs"><Money cents={Math.round(baseReward * 1.25)} currency={currency} /></span>
                                 </Button>
                               </div>
                             ) : (
@@ -522,7 +491,7 @@ function ReviewContent() {
                                 <Slider
                                   value={[customEffortValue]}
                                   min={0}
-                                  max={100}
+                                  max={200}
                                   step={5}
                                   onValueChange={([v]) => setCustomEffortValue(v)}
                                   className="flex-1"
