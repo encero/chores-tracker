@@ -166,7 +166,7 @@ function ScheduleContent() {
     setSelectedTemplate(schedule.choreTemplateId)
     setReward((schedule.reward / 100).toFixed(2))
     setIsJoined(schedule.isJoined)
-    setIsOptional(schedule.isOptional ?? false)
+    setIsOptional(schedule.isOptional)
     setMaxPickupsPerPeriod(schedule.maxPickupsPerPeriod?.toString() ?? '')
     setScheduleType(schedule.scheduleType)
     setScheduleDays(schedule.scheduleDays ?? [])

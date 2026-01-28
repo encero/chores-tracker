@@ -5,13 +5,6 @@ function getToday(): string {
   return new Date().toISOString().split('T')[0]
 }
 
-// Get yesterday's date in ISO format
-function getYesterday(): string {
-  const date = new Date()
-  date.setDate(date.getDate() - 1)
-  return date.toISOString().split('T')[0]
-}
-
 // Get day of week (0 = Sunday, 1 = Monday, etc.)
 function getDayOfWeek(): number {
   return new Date().getDay()
@@ -39,6 +32,9 @@ export const generateDailyChores = internalMutation({
       // Check date range
       if (schedule.startDate > today) continue
       if (schedule.endDate && schedule.endDate < today) continue
+
+      // skip optional schedules
+      if (schedule.isOptional) continue
 
       switch (schedule.scheduleType) {
         case 'daily':
@@ -100,29 +96,5 @@ export const generateDailyChores = internalMutation({
     }
 
     return { created }
-  },
-})
-
-// Mark yesterday's incomplete chores as missed
-export const markMissedChores = internalMutation({
-  args: {},
-  handler: async (ctx) => {
-    const yesterday = getYesterday()
-
-    const instances = await ctx.db
-      .query('choreInstances')
-      .withIndex('by_date_status', (q) =>
-        q.eq('dueDate', yesterday).eq('status', 'pending')
-      )
-      .collect()
-
-    let marked = 0
-
-    for (const instance of instances) {
-      await ctx.db.patch(instance._id, { status: 'missed' })
-      marked++
-    }
-
-    return { marked }
   },
 })
