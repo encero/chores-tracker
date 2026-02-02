@@ -22,7 +22,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { QUALITY_COEFFICIENTS } from '@/lib/currency'
+import { calculateBaseRewardForDisplay, calculateRateAllEarnedReward } from '@/lib/reward'
 import { Money } from '@/components/ui/money'
 
 const ITEMS_PER_PAGE = 10
@@ -342,12 +342,14 @@ function ReviewContent() {
                       const isRating = ratingChildId === p.childId
                       const alreadyRated = !!p.quality
                       const numParticipants = chore.participants.length
-                      // const isCustomEffort = isJoined && customEffortChild?.choreId === chore._id && customEffortChild.childId === p.childId
                       const isCustomEffort = customEffortChild?.choreId === chore._id && customEffortChild.childId === p.childId
                       // For joined: reward is split by effort. For non-joined: full reward per kid
-                      const baseReward = isCustomEffort
-                            ? chore.totalReward * (customEffortValue / 100)
-                            : chore.totalReward / numParticipants
+                      const baseReward = calculateBaseRewardForDisplay(
+                        chore.totalReward,
+                        numParticipants,
+                        isJoined,
+                        isCustomEffort ? customEffortValue : undefined
+                      )
 
                       return (
                         <div
@@ -743,11 +745,13 @@ function ReviewContent() {
                 {rateAllChoreData.participants.map((p) => {
                   const quality = rateAllQualities[p.childId] ?? 'good'
                   const effort = rateAllEfforts[p.childId] ?? 0
-                  const coefficient = QUALITY_COEFFICIENTS[quality]
                   // For joined: reward is split by effort. For non-joined: full reward per kid
-                  const earnedReward = rateAllChoreData.isJoined
-                    ? Math.round((rateAllChoreData.totalReward * effort / 100) * coefficient)
-                    : Math.round(rateAllChoreData.totalReward * coefficient)
+                  const earnedReward = calculateRateAllEarnedReward(
+                    rateAllChoreData.totalReward,
+                    effort,
+                    quality,
+                    rateAllChoreData.isJoined
+                  )
 
                   return (
                     <div key={p.childId} className="space-y-2 rounded-lg border p-3">
