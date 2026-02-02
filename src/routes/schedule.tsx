@@ -162,14 +162,14 @@ function ScheduleContent() {
 
   const handleOpenEdit = (schedule: NonNullable<typeof schedules>[number]) => {
     setEditingId(schedule._id)
-    setSelectedChildren(schedule.childIds)
-    setSelectedTemplate(schedule.choreTemplateId)
+    setSelectedChildren([...schedule.childIds] as Array<string>)
+    setSelectedTemplate(schedule.choreTemplateId as string)
     setReward((schedule.reward / 100).toFixed(2))
     setIsJoined(schedule.isJoined)
     setIsOptional(schedule.isOptional)
     setMaxPickupsPerPeriod(schedule.maxPickupsPerPeriod?.toString() ?? '')
     setScheduleType(schedule.scheduleType)
-    setScheduleDays(schedule.scheduleDays ?? [])
+    setScheduleDays([...(schedule.scheduleDays ?? [])])
     setStartDate(schedule.startDate)
     setEndDate(schedule.endDate ?? '')
   }
@@ -533,11 +533,10 @@ function ScheduleContent() {
                         )}
                       </span>
                     ) : (
-                      schedule.children.map((child) => (child !== null && (
+                      schedule.children.map((child) => (
                         <span key={child._id} className="flex items-center gap-1">
                           {child.avatarEmoji} {child.name}
                         </span>
-                      )
                       ))
                     )}
                   </div>
@@ -559,11 +558,11 @@ function ScheduleContent() {
                       )}
                     </span>
                   ) : (
-                    schedule.children.map((child) => (child !== null && (
+                    schedule.children.map((child) => (
                       <span key={child._id} className="flex items-center gap-1">
                         {child.avatarEmoji} {child.name}
                       </span>
-                    )))
+                    ))
                   )}
                   <span className="text-xs">
                     {schedule.scheduleType === 'once' && `One time: ${schedule.startDate}`}

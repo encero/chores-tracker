@@ -79,7 +79,7 @@ function SettingsContent() {
         setNewPin('')
         setConfirmPin('')
       } else {
-        setPinError(result.error ?? 'Failed to change PIN')
+        setPinError(result.error)
       }
     } catch {
       setPinError('Failed to change PIN')

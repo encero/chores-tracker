@@ -1,4 +1,7 @@
-import { internalMutation } from './_generated/server'
+import { Effect, Option, Schema } from 'effect'
+import { ConfectMutationCtx } from '@rjdellecese/confect/server'
+import { internalMutation } from './confect'
+import type { ConfectDataModel } from './confect'
 
 // Get today's date in ISO format
 function getToday(): string {
@@ -10,91 +13,97 @@ function getDayOfWeek(): number {
   return new Date().getDay()
 }
 
+const GenerateResult = Schema.Struct({
+  created: Schema.Number,
+})
+
 // Generate daily chores based on schedules
 export const generateDailyChores = internalMutation({
-  args: {},
-  handler: async (ctx) => {
-    const today = getToday()
-    const dayOfWeek = getDayOfWeek()
+  args: Schema.Struct({}),
+  returns: GenerateResult,
+  handler: () =>
+    Effect.gen(function* () {
+      const { db } = yield* ConfectMutationCtx<ConfectDataModel>()
 
-    // Get all active schedules
-    const schedules = await ctx.db
-      .query('scheduledChores')
-      .withIndex('by_active', (q) => q.eq('isActive', true))
-      .collect()
+      const today = getToday()
+      const dayOfWeek = getDayOfWeek()
 
-    let created = 0
+      // Get all active schedules
+      const schedules = yield* db
+        .query('scheduledChores')
+        .withIndex('by_active', (q) => q.eq('isActive', true))
+        .collect()
 
-    for (const schedule of schedules) {
-      // Check if we should create an instance today
-      let shouldCreate = false
+      let created = 0
 
-      // Check date range
-      if (schedule.startDate > today) continue
-      if (schedule.endDate && schedule.endDate < today) continue
+      for (const schedule of schedules) {
+        // Check if we should create an instance today
+        let shouldCreate = false
 
-      // skip optional schedules
-      if (schedule.isOptional) continue
+        // Check date range
+        if (schedule.startDate > today) continue
+        if (schedule.endDate && schedule.endDate < today) continue
 
-      switch (schedule.scheduleType) {
-        case 'daily':
-          shouldCreate = true
-          break
-        case 'weekly': {
-          // Weekly chores happen on the start date's day of week
-          const startDay = new Date(schedule.startDate).getDay()
-          shouldCreate = dayOfWeek === startDay
-          break
+        // skip optional schedules
+        if (schedule.isOptional) continue
+
+        switch (schedule.scheduleType) {
+          case 'daily':
+            shouldCreate = true
+            break
+          case 'weekly': {
+            // Weekly chores happen on the start date's day of week
+            const startDay = new Date(schedule.startDate).getDay()
+            shouldCreate = dayOfWeek === startDay
+            break
+          }
+          case 'custom':
+            // Check if today is one of the scheduled days
+            shouldCreate = schedule.scheduleDays?.includes(dayOfWeek) ?? false
+            break
+          case 'once':
+            // One-time chores only on start date
+            shouldCreate = schedule.startDate === today
+            break
         }
-        case 'custom':
-          // Check if today is one of the scheduled days
-          shouldCreate = schedule.scheduleDays?.includes(dayOfWeek) ?? false
-          break
-        case 'once':
-          // One-time chores only on start date
-          shouldCreate = schedule.startDate === today
-          break
-      }
 
-      if (!shouldCreate) continue
+        if (!shouldCreate) continue
 
-      // Check if instance already exists for today
-      const existing = await ctx.db
-        .query('choreInstances')
-        .withIndex('by_scheduled_chore', (q) =>
-          q.eq('scheduledChoreId', schedule._id)
-        )
-        .filter((q) => q.eq(q.field('dueDate'), today))
-        .first()
+        // Check if instance already exists for today
+        const existing = yield* db
+          .query('choreInstances')
+          .withIndex('by_scheduled_chore', (q) => q.eq('scheduledChoreId', schedule._id))
+          .filter((q) => q.eq(q.field('dueDate'), today))
+          .first()
 
-      if (existing) continue
+        if (Option.isSome(existing)) continue
 
-      // Create instance
-      const instanceId = await ctx.db.insert('choreInstances', {
-        scheduledChoreId: schedule._id,
-        dueDate: today,
-        isJoined: schedule.isJoined,
-        status: 'pending',
-        totalReward: schedule.reward,
-      })
-
-      // Create participant records
-      for (const childId of schedule.childIds) {
-        await ctx.db.insert('choreParticipants', {
-          choreInstanceId: instanceId,
-          childId,
+        // Create instance
+        const instanceId = yield* db.insert('choreInstances', {
+          scheduledChoreId: schedule._id,
+          dueDate: today,
+          isJoined: schedule.isJoined,
           status: 'pending',
+          totalReward: schedule.reward,
         })
+
+        // Create participant records
+        for (const childId of schedule.childIds) {
+          yield* db.insert('choreParticipants', {
+            choreInstanceId: instanceId,
+            childId,
+            status: 'pending',
+          })
+        }
+
+        created++
+
+        // If this was a one-time chore, deactivate the schedule
+        if (schedule.scheduleType === 'once') {
+          yield* db.patch(schedule._id, { isActive: false })
+        }
       }
 
-      created++
-
-      // If this was a one-time chore, deactivate the schedule
-      if (schedule.scheduleType === 'once') {
-        await ctx.db.patch(schedule._id, { isActive: false })
-      }
-    }
-
-    return { created }
-  },
+      return { created }
+    }),
 })

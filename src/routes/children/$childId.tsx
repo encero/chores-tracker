@@ -108,7 +108,7 @@ function ChildDetailContent() {
     setIsSubmitting(true)
     try {
       await createWithdrawal({
-        childId: child._id,
+        childId: child._id as Id<'children'>,
         amount,
         note: withdrawNote.trim() || undefined,
       })
@@ -140,7 +140,7 @@ function ChildDetailContent() {
     setIsSubmitting(true)
     try {
       await adjustBalance({
-        id: child._id,
+        id: child._id as Id<'children'>,
         newBalance,
         note: adjustNote.trim() || undefined,
       })
@@ -239,7 +239,6 @@ function ChildDetailContent() {
           ) : (
             <div className="space-y-3">
               {pendingChores.map((chore) => {
-                if (!chore) return null
                 const myParticipation = chore.myParticipation
 
                 return (
@@ -297,7 +296,6 @@ function ChildDetailContent() {
           ) : (
             <div className="space-y-3">
               {completedChores.map((chore) => {
-                if (!chore) return null
                 const myParticipation = chore.myParticipation
 
                 return (
