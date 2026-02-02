@@ -95,9 +95,11 @@ test.describe('Review Page', () => {
     await loginAsParent(page)
     await page.goto('/review')
 
-    // Click the second Rate All button (for joined chore - Umýt nádobí)
-    // First one is for split chore (Vynést koš)
-    await page.getByRole('button', { name: /Rate All/i }).nth(1).click()
+    // Find the joined chore card (Umýt nádobí) by locating the heading and navigating to its Card container
+    const joinedChoreHeading = page.getByRole('heading', { name: 'Umýt nádobí' })
+    // Get the Card container (parent elements up to the card boundary)
+    const joinedChoreCard = page.locator('[class*="rounded-xl border"]').filter({ has: joinedChoreHeading })
+    await joinedChoreCard.getByRole('button', { name: /Rate All/i }).click()
 
     // Dialog should open
     await expect(page.getByText('Rate All Participants')).toBeVisible()
