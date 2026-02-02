@@ -30,8 +30,8 @@ bunx convex env set IS_TEST true
 # 3. Start the dev server in background
 bun run dev &
 
-# 4. Run E2E tests with cloud URL (check .env.local for VITE_CONVEX_URL)
-VITE_CONVEX_URL=https://avid-gull-266.convex.cloud npm run test:e2e
+# 4. Run E2E tests (uses VITE_CONVEX_URL from .env.local)
+source .env.local && npm run test:e2e
 
 # 5. IMPORTANT: Disable test mode when done
 bunx convex env set IS_TEST false
