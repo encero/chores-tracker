@@ -313,7 +313,7 @@ function DashboardContent() {
             {children.map((child) => {
               // Count pending chores for this child
               const pendingChores = todayChores.filter((chore) =>
-                chore?.status !== 'missed' && chore?.participants.some(
+                chore.status !== 'missed' && chore.participants.some(
                   (p) => p.childId === child._id && p.status === 'pending'
                 )
               ).length
@@ -356,7 +356,7 @@ function DashboardContent() {
       <section>
         <h2 className="mb-4 text-xl font-semibold">Today's Chores</h2>
 
-        {todayChores.filter(c => c?.status !== 'missed').length === 0 ? (
+        {todayChores.filter(c => c.status !== 'missed').length === 0 ? (
           <EmptyState
             icon={<ClipboardCheck />}
             title="No chores for today"
@@ -372,8 +372,7 @@ function DashboardContent() {
           />
         ) : (
           <div className="space-y-3">
-            {todayChores.filter(c => c?.status !== 'missed').map((chore) => {
-              if (!chore) return null
+            {todayChores.filter(c => c.status !== 'missed').map((chore) => {
 
               const doneCount = chore.participants.filter(
                 (p) => p.status === 'done'
