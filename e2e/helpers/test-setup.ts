@@ -14,3 +14,8 @@ export async function resetAndSeedDatabase() {
 export async function resetDatabase() {
   await client.mutation(api.testing.resetDatabase, {})
 }
+
+export async function seedReviewTestData() {
+  await client.mutation(api.testing.resetDatabase, {})
+  await client.mutation(api.testing.seedReviewTestData, {})
+}
