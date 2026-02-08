@@ -24,6 +24,7 @@ import {
 } from '@/components/ui/dialog'
 import { calculateBaseRewardForDisplay, calculateRateAllEarnedReward } from '@/lib/reward'
 import { Money } from '@/components/ui/money'
+import { useAuthToken } from '@/hooks/useAuthToken'
 
 const ITEMS_PER_PAGE = 10
 
@@ -42,6 +43,7 @@ function ReviewPage() {
 }
 
 function ReviewContent() {
+  const token = useAuthToken()
   const [limit, setLimit] = useState(ITEMS_PER_PAGE)
   const forReviewResult = useQuery(api.choreInstances.getForReview, { limit })
   const settings = useQuery(api.settings.get)
@@ -88,6 +90,7 @@ function ReviewContent() {
     setRatingChildId(childId)
     try {
       await rateParticipant({
+        token,
         instanceId: choreId as Id<'choreInstances'>,
         childId: childId as Id<'children'>,
         quality,
@@ -103,6 +106,7 @@ function ReviewContent() {
     setUnmarkingChildId(childId)
     try {
       await unmarkDone({
+        token,
         instanceId: choreId as Id<'choreInstances'>,
         childId: childId as Id<'children'>,
       })
@@ -151,6 +155,7 @@ function ReviewContent() {
       }))
 
       await rateAllParticipants({
+        token,
         instanceId: rateAllChoreData._id as Id<'choreInstances'>,
         ratings,
         notes: rateAllNotes.trim() || undefined,
@@ -195,6 +200,7 @@ function ReviewContent() {
     setIsSubmitting(true)
     try {
       await rateJoinedChore({
+        token,
         instanceId: selectedChoreData._id as Id<'choreInstances'>,
         quality,
         efforts: Object.entries(efforts).map(([childId, effortPercent]) => ({

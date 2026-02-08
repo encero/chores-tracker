@@ -1,5 +1,6 @@
 import { v } from 'convex/values'
 import { mutation, query } from './_generated/server'
+import { requireAuth } from './lib/auth'
 
 // Helper to get today's date in ISO format
 function getToday(): string {
@@ -112,9 +113,10 @@ export const get = query({
   },
 })
 
-// Create a new scheduled chore
+// Create a new scheduled chore - requires auth
 export const create = mutation({
   args: {
+    token: v.optional(v.string()),
     childIds: v.array(v.id('children')),
     choreTemplateId: v.id('choreTemplates'),
     reward: v.number(),
@@ -132,6 +134,11 @@ export const create = mutation({
     endDate: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    await requireAuth(ctx.db, args.token)
+
+    if (args.reward < 0) {
+      throw new Error('Reward cannot be negative')
+    }
     // Validate children exist
     for (const childId of args.childIds) {
       const child = await ctx.db.get(childId)
@@ -213,9 +220,10 @@ export const create = mutation({
   },
 })
 
-// Update a scheduled chore
+// Update a scheduled chore - requires auth
 export const update = mutation({
   args: {
+    token: v.optional(v.string()),
     id: v.id('scheduledChores'),
     childIds: v.optional(v.array(v.id('children'))),
     reward: v.optional(v.number()),
@@ -235,6 +243,8 @@ export const update = mutation({
     isActive: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
+    await requireAuth(ctx.db, args.token)
+
     const schedule = await ctx.db.get(args.id)
     if (!schedule) {
       throw new Error('Scheduled chore not found')
@@ -267,12 +277,14 @@ export const update = mutation({
   },
 })
 
-// Delete a scheduled chore
+// Delete a scheduled chore - requires auth
 export const remove = mutation({
   args: {
+    token: v.optional(v.string()),
     id: v.id('scheduledChores'),
   },
   handler: async (ctx, args) => {
+    await requireAuth(ctx.db, args.token)
     const schedule = await ctx.db.get(args.id)
     if (!schedule) {
       throw new Error('Scheduled chore not found')
@@ -302,12 +314,15 @@ export const remove = mutation({
   },
 })
 
-// Toggle active status
+// Toggle active status - requires auth
 export const toggleActive = mutation({
   args: {
+    token: v.optional(v.string()),
     id: v.id('scheduledChores'),
   },
   handler: async (ctx, args) => {
+    await requireAuth(ctx.db, args.token)
+
     const schedule = await ctx.db.get(args.id)
     if (!schedule) {
       throw new Error('Scheduled chore not found')

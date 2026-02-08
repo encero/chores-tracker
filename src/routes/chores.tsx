@@ -20,6 +20,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { Money } from '@/components/ui/money'
+import { useAuthToken } from '@/hooks/useAuthToken'
 
 const ITEMS_PER_PAGE = 12
 
@@ -40,6 +41,7 @@ function ChoresPage() {
 const CHORE_ICONS = ['🛏️', '🧹', '🍽️', '🗑️', '🐕', '📚', '🧺', '🚿', '🌱', '🚗', '✏️', '🧼']
 
 function ChoresContent() {
+  const token = useAuthToken()
   const [limit, setLimit] = useState(ITEMS_PER_PAGE)
   const templatesResult = useQuery(api.choreTemplates.list, { limit })
   const settings = useQuery(api.settings.get)
@@ -75,6 +77,7 @@ function ChoresContent() {
     setIsSubmitting(true)
     try {
       await createTemplate({
+        token,
         name: name.trim(),
         description: description.trim() || undefined,
         defaultReward: Math.round(parseFloat(reward || '0') * 100),
@@ -92,6 +95,7 @@ function ChoresContent() {
     setIsSubmitting(true)
     try {
       await updateTemplate({
+        token,
         id: id as any,
         name: name.trim(),
         description: description.trim() || undefined,
@@ -109,7 +113,7 @@ function ChoresContent() {
     setIsSubmitting(true)
     setDeleteError(null)
     try {
-      await removeTemplate({ id: id as any })
+      await removeTemplate({ token, id: id as any })
       setDeletingId(null)
     } catch (err: any) {
       setDeleteError(err.message || 'Failed to delete')

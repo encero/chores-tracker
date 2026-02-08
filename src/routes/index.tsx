@@ -29,6 +29,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Money } from '@/components/ui/money'
+import { useAuthToken } from '@/hooks/useAuthToken'
 
 export const Route = createFileRoute('/')({
   component: DashboardPage,
@@ -45,6 +46,7 @@ function DashboardPage() {
 }
 
 function DashboardContent() {
+  const token = useAuthToken()
   const children = useQuery(api.children.list)
   const todayChores = useQuery(api.choreInstances.getToday, {})
   const forReviewResult = useQuery(api.choreInstances.getForReview, { limit: 100 })
@@ -98,6 +100,7 @@ function DashboardContent() {
     setIsSubmitting(true)
     try {
       await createSchedule({
+        token,
         childIds: selectedChildren as Array<Id<'children'>>,
         choreTemplateId: selectedTemplate as Id<'choreTemplates'>,
         reward: Math.round(parseFloat(reward || '0') * 100),
@@ -130,6 +133,7 @@ function DashboardContent() {
     setMarkingMissedId(instanceId)
     try {
       await markMissed({
+        token,
         instanceId: instanceId as Id<'choreInstances'>,
       })
     } finally {

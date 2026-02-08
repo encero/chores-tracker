@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { useAuthToken } from '@/hooks/useAuthToken'
 
 export const Route = createFileRoute('/settings')({
   component: SettingsPage,
@@ -25,6 +26,7 @@ function SettingsPage() {
 }
 
 function SettingsContent() {
+  const token = useAuthToken()
   const settings = useQuery(api.settings.get)
   const updateSettings = useMutation(api.settings.update)
   const changePin = useMutation(api.settings.changePin)
@@ -47,6 +49,7 @@ function SettingsContent() {
     setSaving(true)
     try {
       await updateSettings({
+        token,
         currency,
         sessionDurationDays: parseInt(sessionDays),
         ttsLanguage,
@@ -72,7 +75,7 @@ function SettingsContent() {
 
     setChangingPin(true)
     try {
-      const result = await changePin({ currentPin, newPin })
+      const result = await changePin({ token, currentPin, newPin })
       if (result.success) {
         setPinSuccess(true)
         setCurrentPin('')

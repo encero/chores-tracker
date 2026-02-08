@@ -22,6 +22,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Money } from '@/components/ui/money'
+import { useAuthToken } from '@/hooks/useAuthToken'
 
 export const Route = createFileRoute('/children/$childId')({
   component: ChildDetailPage,
@@ -40,6 +41,7 @@ function ChildDetailPage() {
 const ITEMS_PER_PAGE = 10
 
 function ChildDetailContent() {
+  const token = useAuthToken()
   const { childId } = Route.useParams()
 
   const [pendingLimit, setPendingLimit] = useState(ITEMS_PER_PAGE)
@@ -108,6 +110,7 @@ function ChildDetailContent() {
     setIsSubmitting(true)
     try {
       await createWithdrawal({
+        token,
         childId: child._id,
         amount,
         note: withdrawNote.trim() || undefined,
@@ -140,6 +143,7 @@ function ChildDetailContent() {
     setIsSubmitting(true)
     try {
       await adjustBalance({
+        token,
         id: child._id,
         newBalance,
         note: adjustNote.trim() || undefined,

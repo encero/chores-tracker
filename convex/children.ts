@@ -1,6 +1,7 @@
 import { v } from 'convex/values'
 import { internalMutation, mutation, query } from './_generated/server'
 import { generateAccessCode } from './lib/hash'
+import { requireAuth } from './lib/auth'
 
 // List all children
 export const list = query({
@@ -33,13 +34,20 @@ export const getByAccessCode = query({
   },
 })
 
-// Create a new child
+// Create a new child - requires auth
 export const create = mutation({
   args: {
+    token: v.optional(v.string()),
     name: v.string(),
     avatarEmoji: v.string(),
   },
   handler: async (ctx, args) => {
+    await requireAuth(ctx.db, args.token)
+
+    if (!args.name.trim()) {
+      throw new Error('Name cannot be empty')
+    }
+
     // Generate unique access code
     let accessCode: string
     let attempts = 0
@@ -58,7 +66,7 @@ export const create = mutation({
     }
 
     const id = await ctx.db.insert('children', {
-      name: args.name,
+      name: args.name.trim(),
       avatarEmoji: args.avatarEmoji,
       accessCode,
       balance: 0,
@@ -68,21 +76,28 @@ export const create = mutation({
   },
 })
 
-// Update child info
+// Update child info - requires auth
 export const update = mutation({
   args: {
+    token: v.optional(v.string()),
     id: v.id('children'),
     name: v.optional(v.string()),
     avatarEmoji: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    await requireAuth(ctx.db, args.token)
+
     const child = await ctx.db.get(args.id)
     if (!child) {
       throw new Error('Child not found')
     }
 
+    if (args.name !== undefined && !args.name.trim()) {
+      throw new Error('Name cannot be empty')
+    }
+
     await ctx.db.patch(args.id, {
-      ...(args.name !== undefined && { name: args.name }),
+      ...(args.name !== undefined && { name: args.name.trim() }),
       ...(args.avatarEmoji !== undefined && { avatarEmoji: args.avatarEmoji }),
     })
 
@@ -90,12 +105,15 @@ export const update = mutation({
   },
 })
 
-// Delete child
+// Delete child - requires auth
 export const remove = mutation({
   args: {
+    token: v.optional(v.string()),
     id: v.id('children'),
   },
   handler: async (ctx, args) => {
+    await requireAuth(ctx.db, args.token)
+
     const child = await ctx.db.get(args.id)
     if (!child) {
       throw new Error('Child not found')
@@ -152,12 +170,15 @@ export const remove = mutation({
   },
 })
 
-// Regenerate access code
+// Regenerate access code - requires auth
 export const regenerateAccessCode = mutation({
   args: {
+    token: v.optional(v.string()),
     id: v.id('children'),
   },
   handler: async (ctx, args) => {
+    await requireAuth(ctx.db, args.token)
+
     const child = await ctx.db.get(args.id)
     if (!child) {
       throw new Error('Child not found')
@@ -186,13 +207,16 @@ export const regenerateAccessCode = mutation({
   },
 })
 
-// Update balance (internal use)
+// Update balance (internal use) - requires auth
 export const updateBalance = mutation({
   args: {
+    token: v.optional(v.string()),
     id: v.id('children'),
     amount: v.number(), // Can be positive or negative
   },
   handler: async (ctx, args) => {
+    await requireAuth(ctx.db, args.token)
+
     const child = await ctx.db.get(args.id)
     if (!child) {
       throw new Error('Child not found')
@@ -209,14 +233,17 @@ export const updateBalance = mutation({
   },
 })
 
-// Manual balance adjustment with note (for parent corrections)
+// Manual balance adjustment with note (for parent corrections) - requires auth
 export const adjustBalance = mutation({
   args: {
+    token: v.optional(v.string()),
     id: v.id('children'),
     newBalance: v.number(), // The new absolute balance in cents
     note: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    await requireAuth(ctx.db, args.token)
+
     const child = await ctx.db.get(args.id)
     if (!child) {
       throw new Error('Child not found')

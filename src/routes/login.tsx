@@ -175,7 +175,7 @@ function LoginPage() {
         {children && children.length > 0 && (
           <div className="mb-6 pb-6 border-b border-purple-200">
             <p className="text-sm text-muted-foreground mb-3 text-center">
-              Přejdi na svůj osobní přehled:
+              Klikni na své jméno:
             </p>
             <div className="flex flex-wrap justify-center gap-3">
               {children.map((child) => (

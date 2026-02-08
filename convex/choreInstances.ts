@@ -1,5 +1,6 @@
 import { v } from 'convex/values'
 import { mutation, query } from './_generated/server'
+import { requireAuth } from './lib/auth'
 
 const QUALITY_COEFFICIENTS = {
   failed: 0,
@@ -328,10 +329,13 @@ export const markDone = mutation({
 // Unmark a child's part as done (reset to pending) - only available before review
 export const unmarkDone = mutation({
   args: {
+    token: v.optional(v.string()),
     instanceId: v.id('choreInstances'),
     childId: v.id('children'),
   },
   handler: async (ctx, args) => {
+    await requireAuth(ctx.db, args.token)
+
     const instance = await ctx.db.get(args.instanceId)
     if (!instance) {
       throw new Error('Chore instance not found')
@@ -369,14 +373,17 @@ export const unmarkDone = mutation({
   },
 })
 
-// Rate a chore (for individual chores)
+// Rate a chore (for individual chores) - requires auth
 export const rate = mutation({
   args: {
+    token: v.optional(v.string()),
     instanceId: v.id('choreInstances'),
     quality: v.union(v.literal('failed'), v.literal('bad'), v.literal('good'), v.literal('excellent')),
     notes: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    await requireAuth(ctx.db, args.token)
+
     const instance = await ctx.db.get(args.instanceId)
     if (!instance) {
       throw new Error('Chore instance not found')
@@ -451,9 +458,10 @@ export const rate = mutation({
   },
 })
 
-// Rate joined chore with custom effort split
+// Rate joined chore with custom effort split - requires auth
 export const rateJoined = mutation({
   args: {
+    token: v.optional(v.string()),
     instanceId: v.id('choreInstances'),
     quality: v.union(v.literal('failed'), v.literal('bad'), v.literal('good'), v.literal('excellent')),
     efforts: v.array(
@@ -466,6 +474,8 @@ export const rateJoined = mutation({
     forceComplete: v.optional(v.boolean()), // Allow parent to force complete even if not all done
   },
   handler: async (ctx, args) => {
+    await requireAuth(ctx.db, args.token)
+
     const instance = await ctx.db.get(args.instanceId)
     if (!instance) {
       throw new Error('Chore instance not found')
@@ -539,15 +549,18 @@ export const rateJoined = mutation({
   },
 })
 
-// Rate a single participant in any multi-kid chore individually
+// Rate a single participant in any multi-kid chore individually - requires auth
 export const rateParticipant = mutation({
   args: {
+    token: v.optional(v.string()),
     instanceId: v.id('choreInstances'),
     childId: v.id('children'),
     quality: v.union(v.literal('failed'), v.literal('bad'), v.literal('good'), v.literal('excellent')),
     effortPercent: v.optional(v.number()), // Custom participation rate (only for joined chores)
   },
   handler: async (ctx, args) => {
+    await requireAuth(ctx.db, args.token)
+
     const instance = await ctx.db.get(args.instanceId)
     if (!instance) {
       throw new Error('Chore instance not found')
@@ -630,9 +643,10 @@ export const rateParticipant = mutation({
   },
 })
 
-// Rate all participants at once with individual qualities (and effort percentages for joined chores)
+// Rate all participants at once with individual qualities - requires auth
 export const rateAllParticipants = mutation({
   args: {
+    token: v.optional(v.string()),
     instanceId: v.id('choreInstances'),
     ratings: v.array(
       v.object({
@@ -644,6 +658,8 @@ export const rateAllParticipants = mutation({
     notes: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    await requireAuth(ctx.db, args.token)
+
     const instance = await ctx.db.get(args.instanceId)
     if (!instance) {
       throw new Error('Chore instance not found')
@@ -715,12 +731,15 @@ export const rateAllParticipants = mutation({
   },
 })
 
-// Mark chore as missed
+// Mark chore as missed - requires auth
 export const markMissed = mutation({
   args: {
+    token: v.optional(v.string()),
     instanceId: v.id('choreInstances'),
   },
   handler: async (ctx, args) => {
+    await requireAuth(ctx.db, args.token)
+
     const instance = await ctx.db.get(args.instanceId)
     if (!instance) {
       throw new Error('Chore instance not found')
@@ -738,13 +757,16 @@ export const markMissed = mutation({
   },
 })
 
-// Create a chore instance (used by scheduler or manually)
+// Create a chore instance (used by scheduler or manually) - requires auth
 export const create = mutation({
   args: {
+    token: v.optional(v.string()),
     scheduledChoreId: v.id('scheduledChores'),
     dueDate: v.string(),
   },
   handler: async (ctx, args) => {
+    await requireAuth(ctx.db, args.token)
+
     const schedule = await ctx.db.get(args.scheduledChoreId)
     if (!schedule) {
       throw new Error('Scheduled chore not found')

@@ -24,8 +24,9 @@ export function useAuth() {
     session?.token ? { token: session.token } : 'skip'
   )
 
-  // Login mutation
+  // Mutations
   const loginMutation = useMutation(api.auth.login)
+  const logoutMutation = useMutation(api.auth.logout)
 
   // Load session from localStorage on mount
   useEffect(() => {
@@ -50,7 +51,7 @@ export function useAuth() {
   const isAuthenticated = !!session && verifySession === true
 
   // Check if PIN is set up
-  const isPinSetUp = settings?.pinHash != null
+  const isPinSetUp = settings?.isPinSet === true
 
   // Login with PIN
   const login = useCallback(
@@ -74,18 +75,24 @@ export function useAuth() {
     [loginMutation]
   )
 
-  // Logout
+  // Logout - invalidates session server-side and clears local state
   const logout = useCallback(() => {
+    if (session?.token) {
+      logoutMutation({ token: session.token }).catch(() => {
+        // Best effort - token will expire eventually even if server call fails
+      })
+    }
     setSession(null)
     localStorage.removeItem(SESSION_KEY)
     navigate({ to: '/login' })
-  }, [navigate])
+  }, [session, logoutMutation, navigate])
 
   return {
     isAuthenticated,
     isLoading: isLoading || settings === undefined || (verifySession === undefined && !!session),
     isPinSetUp,
     settings,
+    token: session?.token,
     login,
     logout,
   }

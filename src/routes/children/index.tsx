@@ -20,6 +20,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { Money } from '@/components/ui/money'
+import { useAuthToken } from '@/hooks/useAuthToken'
 
 export const Route = createFileRoute('/children/')({
   component: ChildrenPage,
@@ -38,6 +39,7 @@ function ChildrenPage() {
 const EMOJI_OPTIONS = ['👦', '👧', '🧒', '👶', '🐱', '🐶', '🦊', '🐻', '🐼', '🐨', '🦁', '🐯']
 
 function ChildrenContent() {
+  const token = useAuthToken()
   const children = useQuery(api.children.list)
   const settings = useQuery(api.settings.get)
   const createChild = useMutation(api.children.create)
@@ -58,7 +60,7 @@ function ChildrenContent() {
     if (!name.trim()) return
     setIsSubmitting(true)
     try {
-      await createChild({ name: name.trim(), avatarEmoji: emoji })
+      await createChild({ token, name: name.trim(), avatarEmoji: emoji })
       setName('')
       setEmoji('👦')
       setIsAddOpen(false)
@@ -71,7 +73,7 @@ function ChildrenContent() {
     if (!name.trim()) return
     setIsSubmitting(true)
     try {
-      await updateChild({ id: childId as any, name: name.trim(), avatarEmoji: emoji })
+      await updateChild({ token, id: childId as any, name: name.trim(), avatarEmoji: emoji })
       setEditingChild(null)
       setName('')
       setEmoji('👦')
@@ -83,7 +85,7 @@ function ChildrenContent() {
   const handleDelete = async (childId: string) => {
     setIsSubmitting(true)
     try {
-      await removeChild({ id: childId as any })
+      await removeChild({ token, id: childId as any })
       setDeletingChild(null)
     } finally {
       setIsSubmitting(false)

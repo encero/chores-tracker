@@ -10,6 +10,7 @@ interface AuthContextType {
   isAuthenticated: boolean
   isLoading: boolean
   isPinSetUp: boolean
+  token: string | undefined
   login: (pin: string, rememberMe: boolean) => Promise<boolean>
   logout: () => void
 }
@@ -18,6 +19,7 @@ export const AuthContext = createContext<AuthContextType>({
   isAuthenticated: false,
   isLoading: true,
   isPinSetUp: false,
+  token: undefined,
   login: async () => {return false},
   logout: () => {},
 })

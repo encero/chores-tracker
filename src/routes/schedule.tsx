@@ -30,6 +30,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Money } from '@/components/ui/money'
+import { useAuthToken } from '@/hooks/useAuthToken'
 
 const ITEMS_PER_PAGE = 15
 
@@ -58,6 +59,7 @@ const DAYS_OF_WEEK = [
 ]
 
 function ScheduleContent() {
+  const token = useAuthToken()
   const [limit, setLimit] = useState(ITEMS_PER_PAGE)
   const schedulesResult = useQuery(api.scheduledChores.list, { limit })
   const templatesResult = useQuery(api.choreTemplates.list, {})
@@ -132,6 +134,7 @@ function ScheduleContent() {
     setIsSubmitting(true)
     try {
       await createSchedule({
+        token,
         childIds: isOptional ? [] : selectedChildren as Array<Id<'children'>>,
         choreTemplateId: selectedTemplate as Id<'choreTemplates'>,
         reward: Math.round(parseFloat(reward || '0') * 100),
@@ -153,7 +156,7 @@ function ScheduleContent() {
   const handleDelete = async (id: string) => {
     setIsSubmitting(true)
     try {
-      await removeSchedule({ id: id as Id<'scheduledChores'> })
+      await removeSchedule({ token, id: id as Id<'scheduledChores'> })
       setDeletingId(null)
     } finally {
       setIsSubmitting(false)
@@ -180,6 +183,7 @@ function ScheduleContent() {
     setIsSubmitting(true)
     try {
       await updateSchedule({
+        token,
         id: editingId as Id<'scheduledChores'>,
         childIds: isOptional ? [] : selectedChildren as Array<Id<'children'>>,
         reward: Math.round(parseFloat(reward || '0') * 100),
@@ -198,7 +202,7 @@ function ScheduleContent() {
   }
 
   const handleToggleActive = async (id: string) => {
-    await toggleActive({ id: id as Id<'scheduledChores'> })
+    await toggleActive({ token, id: id as Id<'scheduledChores'> })
   }
 
   if (schedulesResult === undefined || templatesResult === undefined || children === undefined) {

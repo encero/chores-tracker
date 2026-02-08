@@ -1,5 +1,6 @@
 import { v } from 'convex/values'
 import { mutation, query } from './_generated/server'
+import { requireAuth } from './lib/auth'
 
 // List withdrawals for a child
 export const list = query({
@@ -18,14 +19,17 @@ export const list = query({
   },
 })
 
-// Create a withdrawal
+// Create a withdrawal - requires auth
 export const create = mutation({
   args: {
+    token: v.optional(v.string()),
     childId: v.id('children'),
     amount: v.number(),
     note: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    await requireAuth(ctx.db, args.token)
+
     const child = await ctx.db.get(args.childId)
     if (!child) {
       throw new Error('Child not found')
