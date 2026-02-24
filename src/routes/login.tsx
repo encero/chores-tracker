@@ -91,7 +91,7 @@ function LoginPage() {
   if (children && todayChores) {
     for (const child of children) {
       const childChores = todayChores.filter((chore) =>
-        chore && chore.participants.some((p) => p.childId === child._id) 
+        chore.participants.some((p) => p.childId === child._id)
       )
       if (childChores.length > 0) {
         choresByChild.set(child._id, childChores)
@@ -215,12 +215,12 @@ function LoginPage() {
 
               const pendingChores = childChores.filter(
                 (c) =>
-                  c?.participants.find((p) => p.childId === child._id)?.status === 'pending'
+                  c.participants.find((p) => p.childId === child._id)?.status === 'pending'
               )
               const doneChores = childChores.filter(
                 (c) =>
-                  c?.participants.find((p) => p.childId === child._id)?.status === 'done' ||
-                  c?.status === 'completed'
+                  c.participants.find((p) => p.childId === child._id)?.status === 'done' ||
+                  c.status === 'completed'
               )
               const pendingCount = pendingChores.length
               const doneCount = doneChores.length
@@ -261,7 +261,6 @@ function LoginPage() {
                   <div className="space-y-2 mt-3">
                     {/* Pending chores (always visible) */}
                     {pendingChores.map((chore) => {
-                      if (!chore) return null
                       const key = `${chore._id}-${child._id}`
                       const isMarking = marking === key
 
@@ -345,8 +344,6 @@ function LoginPage() {
                         </button>
 
                         {isDoneExpanded && doneChores.map((chore) => {
-                          if (!chore) return null
-
                           return (
                             <div
                               key={`${child._id}-${chore._id}`}

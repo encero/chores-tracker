@@ -58,7 +58,7 @@ function KidDashboard() {
       balance={child.balance}
       currency={currency}
     >
-      <KidDashboardContent childId={child._id} currency={currency} ttsLanguage={ttsLanguage} />
+      <KidDashboardContent childId={child._id as Id<'children'>} currency={currency} ttsLanguage={ttsLanguage} />
     </KidLayout>
   )
 }
@@ -129,23 +129,23 @@ function KidDashboardContent({
   }
 
   const myTodayChores = todayChores.filter((c) =>
-    c?.participants.some((p) => p.childId === childId)
+    c.participants.some((p) => p.childId === childId)
   )
 
   const pendingChores = myTodayChores.filter(
     (c) =>
-      c?.status === 'pending' &&
+      c.status === 'pending' &&
       c.participants.find((p) => p.childId === childId)?.status === 'pending'
   )
 
   const completedChores = myTodayChores.filter(
     (c) =>
-      c?.participants.find((p) => p.childId === childId)?.status === 'done' ||
-      c?.status === 'completed'
+      c.participants.find((p) => p.childId === childId)?.status === 'done' ||
+      c.status === 'completed'
   )
 
   const recentCompleted = upcomingChores
-    ?.filter((c) => c?.status === 'completed')
+    ?.filter((c) => c.status === 'completed')
     .slice(0, 5) ?? []
 
   return (
@@ -172,8 +172,6 @@ function KidDashboardContent({
           <div className="space-y-3">
             {/* Pending Chores */}
             {pendingChores.map((chore) => {
-              if (!chore) return null
-
               const myParticipation = chore.participants.find(
                 (p) => p.childId === childId
               )
@@ -280,8 +278,6 @@ function KidDashboardContent({
 
             {/* Completed Chores */}
             {completedChores.map((chore) => {
-              if (!chore) return null
-
               return (
                 <Card
                   key={chore._id}
@@ -371,8 +367,6 @@ function KidDashboardContent({
 
           <div className="space-y-3">
             {availableOptional.map((chore) => {
-              if (!chore) return null
-
               const isLocked = pendingChores.length > 0
 
               return (
@@ -468,8 +462,6 @@ function KidDashboardContent({
 
           <div className="space-y-2">
             {recentCompleted.map((chore) => {
-              if (!chore) return null
-
               const myParticipation = chore.myParticipation
 
               return (

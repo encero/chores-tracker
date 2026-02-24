@@ -76,8 +76,8 @@ function ReviewContent() {
 
   const currency = settings?.currency ?? '$'
 
-  const selectedChoreData = forReview?.find((c) => c?._id === selectedChore)
-  const rateAllChoreData = forReview?.find((c) => c?._id === rateAllChore)
+  const selectedChoreData = forReview?.find((c) => c._id === selectedChore)
+  const rateAllChoreData = forReview?.find((c) => c._id === rateAllChore)
 
   const handleRateParticipant = async (
     choreId: string,
@@ -125,7 +125,6 @@ function ReviewContent() {
 
 
   const initializeRateAll = (chore: NonNullable<typeof forReview>[number]) => {
-    if (!chore) return
     const equalPercent = 100 / chore.participants.length
     const qualities: Record<string, QualityRating> = {}
     const effortsMap: Record<string, number> = {}
@@ -266,8 +265,6 @@ function ReviewContent() {
       ) : (
         <div className="space-y-4">
           {forReview.map((chore) => {
-            if (!chore) return null
-
             const isJoined = chore.isJoined
             const isMultiKid = chore.participants.length > 1
             const doneCount = chore.doneCount
