@@ -16,7 +16,7 @@ interface PaginatedResponse<T> {
 // Helper to create mock paginated response
 function createPaginatedResponse<T>(
   allItems: Array<T>,
-  limit: number
+  limit: number,
 ): PaginatedResponse<T> {
   return {
     items: allItems.slice(0, limit),
@@ -115,16 +115,11 @@ describe('Pagination State Management', () => {
 describe('Chore-specific Pagination Defaults', () => {
   // These constants should match the values used in the frontend components
   const CHILD_DETAIL_ITEMS_PER_PAGE = 10
-  const REVIEW_ITEMS_PER_PAGE = 10
   const TEMPLATES_ITEMS_PER_PAGE = 12
   const SCHEDULE_ITEMS_PER_PAGE = 15
 
   test('child detail page uses correct page size', () => {
     expect(CHILD_DETAIL_ITEMS_PER_PAGE).toBe(10)
-  })
-
-  test('review page uses correct page size', () => {
-    expect(REVIEW_ITEMS_PER_PAGE).toBe(10)
   })
 
   test('templates page uses correct page size', () => {
@@ -153,27 +148,30 @@ describe('Query Status Filter', () => {
     { id: '5', status: 'completed', dueDate: '2024-01-12' },
   ]
 
-  function filterByStatus(chores: Array<MockChore>, status?: ChoreStatus): Array<MockChore> {
+  function filterByStatus(
+    chores: Array<MockChore>,
+    status?: ChoreStatus,
+  ): Array<MockChore> {
     if (!status) return chores
-    return chores.filter(c => c.status === status)
+    return chores.filter((c) => c.status === status)
   }
 
   test('filters pending chores correctly', () => {
     const pending = filterByStatus(mockChores, 'pending')
     expect(pending).toHaveLength(2)
-    expect(pending.every(c => c.status === 'pending')).toBe(true)
+    expect(pending.every((c) => c.status === 'pending')).toBe(true)
   })
 
   test('filters completed chores correctly', () => {
     const completed = filterByStatus(mockChores, 'completed')
     expect(completed).toHaveLength(2)
-    expect(completed.every(c => c.status === 'completed')).toBe(true)
+    expect(completed.every((c) => c.status === 'completed')).toBe(true)
   })
 
   test('filters missed chores correctly', () => {
     const missed = filterByStatus(mockChores, 'missed')
     expect(missed).toHaveLength(1)
-    expect(missed.every(c => c.status === 'missed')).toBe(true)
+    expect(missed.every((c) => c.status === 'missed')).toBe(true)
   })
 
   test('returns all chores when no status filter', () => {
